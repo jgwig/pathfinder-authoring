@@ -1,103 +1,155 @@
-import Image from "next/image";
+"use client";
+
+import { useState, useCallback } from "react";
+import {
+	ReactFlow,
+	applyNodeChanges,
+	applyEdgeChanges,
+	addEdge,
+	MiniMap,
+	Controls,
+	Background,
+	useReactFlow,
+	useNodesState,
+	useEdgesState,
+	Node,
+	Edge,
+	OnConnect,
+	OnConnectEnd,
+	Panel,
+	ReactFlowInstance,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import StageNode from "@/nodes/stage-node";
+import { DevTools } from "@/components/devtools";
+import { ContentBlock } from "@/types/content";
+import { Button } from "@/components/ui/button";
+
+const nodeTypes = {
+	stageNode: StageNode,
+};
+
+const FLOW_KEY = "pathfinder-flow";
+
+const initialNodes: Node<{ blocks: ContentBlock<any>[]; title: string }>[] = [
+	{
+		id: "s1",
+		position: { x: 0, y: 0 },
+		data: {
+			blocks: [],
+			title: "Introduction",
+		},
+		type: "stageNode",
+	},
+];
+
+let id = 1;
+const getId = () => `${id++}`;
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+	const [nodes, setNodes, onNodesChange] =
+		useNodesState<Node<{ blocks: ContentBlock<any>[]; title: string }>>(
+			initialNodes
+		);
+	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
+	const [rfInstance, setRfInstance] = useState<ReactFlowInstance<
+		Node<{ blocks: ContentBlock<any>[]; title: string }>,
+		Edge
+	> | null>(null);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
-  );
+	const { screenToFlowPosition, setViewport } = useReactFlow<
+		Node<{ blocks: ContentBlock<any>[]; title: string }>,
+		Edge
+	>();
+
+	const onConnect: OnConnect = useCallback(
+		(params) => setEdges((eds) => addEdge(params, eds)),
+		[]
+	);
+
+	const onSave = useCallback(() => {
+		if (rfInstance) {
+			const flow = rfInstance.toObject();
+			localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+		}
+	}, [rfInstance]);
+
+	const onRestore = useCallback(() => {
+		const restoreFlow = async () => {
+			const flowString = localStorage.getItem(FLOW_KEY);
+			const flow = flowString ? JSON.parse(flowString) : null;
+
+			if (flow) {
+				const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+				setNodes(flow.nodes || []);
+				setEdges(flow.edges || []);
+				setViewport({ x, y, zoom });
+			}
+		};
+
+		restoreFlow();
+	}, [setNodes, setViewport]);
+
+	const onConnectEnd: OnConnectEnd = useCallback(
+		(event, connectionState) => {
+			// when a connection is dropped on the pane it's not valid
+			if (!connectionState.isValid) {
+				// we need to remove the wrapper bounds, in order to get the correct position
+				const id = getId();
+				const { clientX, clientY } =
+					"changedTouches" in event ? event.changedTouches[0] : event;
+				const newNode: Node<{ blocks: ContentBlock<any>[]; title: string }> = {
+					id,
+					position: screenToFlowPosition({
+						x: clientX,
+						y: clientY,
+					}),
+					data: { blocks: [], title: "Stage " + id },
+					type: "stageNode",
+				};
+
+				setNodes((nds) => nds.concat(newNode));
+				setEdges((eds) =>
+					connectionState.fromNode
+						? eds.concat({
+								id,
+								source: connectionState.fromNode.id,
+								target: id,
+						  })
+						: eds
+				);
+			}
+		},
+		[screenToFlowPosition]
+	);
+
+	return (
+		<div style={{ width: "100vw", height: "100vh" }}>
+			<ReactFlow<Node<{ blocks: ContentBlock<any>[]; title: string }>, Edge>
+				nodes={nodes}
+				edges={edges}
+				nodeTypes={nodeTypes}
+				onNodesChange={onNodesChange}
+				onEdgesChange={onEdgesChange}
+				onConnect={onConnect}
+				onConnectEnd={onConnectEnd}
+				onInit={(instance) => setRfInstance(instance)}
+				fitView
+				fitViewOptions={{ padding: 1.5 }}
+			>
+				<MiniMap />
+				<Controls />
+				<Background />
+				<DevTools position="top-left" />
+				<Panel position="top-right" className="flex flex-row gap-2">
+					<Button variant={"outline"} onClick={() => onSave()}>
+						Save
+					</Button>
+					<Button variant={"outline"} onClick={() => onRestore()}>
+						Restore
+					</Button>
+				</Panel>
+			</ReactFlow>
+		</div>
+	);
 }

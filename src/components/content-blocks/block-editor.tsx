@@ -1,0 +1,105 @@
+import { AnyBlockData, ContentBlock } from "@/types/content";
+import {
+	AssessmentBlockRenderer,
+	AssessmentResultRenderer,
+	ComponentBlockRenderer,
+	DropdownBlockRenderer,
+	ExternalRecommendationRenderer,
+	HtmlBlockRenderer,
+	ImageBlockRenderer,
+	IntroBlockRenderer,
+	ParagraphBlockRenderer,
+	RecommendationBlockRenderer,
+	TitleBlockRenderer,
+	VideoBlockRenderer,
+} from "./block-renderers";
+
+interface BlockEditorProps {
+	handleUpdateBlock: (id: string, data: ContentBlock<any>) => void;
+	block: ContentBlock<any>;
+}
+
+export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
+	function handleChange(data: AnyBlockData) {
+		const updatedBlock: ContentBlock<any> = {
+			id: block.id,
+			type: block.type,
+			data: data,
+		};
+		handleUpdateBlock(block.id, updatedBlock);
+	}
+
+	const renderBlockEditor = () => {
+		const data = block.data;
+
+		switch (block.type) {
+			case "title":
+				return (
+					<TitleBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "paragraph":
+				return (
+					<ParagraphBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "video":
+				return (
+					<VideoBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "image":
+				return (
+					<ImageBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "component":
+				return (
+					<ComponentBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "recommendation":
+				return (
+					<RecommendationBlockRenderer
+						data={data as any}
+						onChange={handleChange}
+					/>
+				);
+			case "externalRecommendation":
+				return (
+					<ExternalRecommendationRenderer
+						data={data as any}
+						onChange={handleChange}
+					/>
+				);
+			case "assessment":
+				return (
+					<AssessmentBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "html":
+				return (
+					<HtmlBlockRenderer data={data as string} onChange={handleChange} />
+				);
+			case "intro":
+				return (
+					<IntroBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "dropdown":
+				return (
+					<DropdownBlockRenderer data={data as any} onChange={handleChange} />
+				);
+			case "assessmentResult":
+				return (
+					<AssessmentResultRenderer
+						data={data as any}
+						onChange={handleChange}
+					/>
+				);
+			default:
+				return (
+					<div className="p-4 bg-muted rounded-lg">
+						<p className="text-sm text-muted-foreground">
+							No editor available for block type: {block.type}
+						</p>
+					</div>
+				);
+		}
+	};
+
+	return <>{renderBlockEditor()}</>;
+}
