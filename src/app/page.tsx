@@ -22,8 +22,9 @@ import {
 import "@xyflow/react/dist/style.css";
 import StageNode from "@/nodes/stage-node";
 import { DevTools } from "@/components/devtools";
-import { ContentBlock } from "@/types/content";
+import { ContentBlock, StageNodeData } from "@/types/content";
 import { Button } from "@/components/ui/button";
+import { Inspector } from "@/components/layout/inspector-sidebar";
 
 const nodeTypes = {
 	stageNode: StageNode,
@@ -31,7 +32,7 @@ const nodeTypes = {
 
 const FLOW_KEY = "pathfinder-flow";
 
-const initialNodes: Node<{ blocks: ContentBlock<any>[]; title: string }>[] = [
+const initialNodes: Node<StageNodeData>[] = [
 	{
 		id: "s1",
 		position: { x: 0, y: 0 },
@@ -46,19 +47,22 @@ const initialNodes: Node<{ blocks: ContentBlock<any>[]; title: string }>[] = [
 let id = 1;
 const getId = () => `${id++}`;
 
+// ...existing code...
+
 export default function Home() {
 	const [nodes, setNodes, onNodesChange] =
-		useNodesState<Node<{ blocks: ContentBlock<any>[]; title: string }>>(
-			initialNodes
-		);
+		useNodesState<Node<StageNodeData>>(initialNodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 	const [rfInstance, setRfInstance] = useState<ReactFlowInstance<
-		Node<{ blocks: ContentBlock<any>[]; title: string }>,
+		Node<StageNodeData>,
 		Edge
 	> | null>(null);
+	const [selectedNode, setSelectedNode] = useState<
+		Node<StageNodeData> | undefined
+	>(undefined);
 
 	const { screenToFlowPosition, setViewport } = useReactFlow<
-		Node<{ blocks: ContentBlock<any>[]; title: string }>,
+		Node<StageNodeData>,
 		Edge
 	>();
 
@@ -95,17 +99,18 @@ export default function Home() {
 			// when a connection is dropped on the pane it's not valid
 			if (!connectionState.isValid) {
 				// we need to remove the wrapper bounds, in order to get the correct position
-				const id = getId();
+				const id = crypto.randomUUID();
 				const { clientX, clientY } =
 					"changedTouches" in event ? event.changedTouches[0] : event;
-				const newNode: Node<{ blocks: ContentBlock<any>[]; title: string }> = {
+				const newNode: Node<StageNodeData> = {
 					id,
 					position: screenToFlowPosition({
 						x: clientX,
 						y: clientY,
 					}),
-					data: { blocks: [], title: "Stage " + id },
+					data: { blocks: [], title: "New Stage" },
 					type: "stageNode",
+					selected: true,
 				};
 
 				setNodes((nds) => nds.concat(newNode));
@@ -124,32 +129,36 @@ export default function Home() {
 	);
 
 	return (
-		<div style={{ width: "100vw", height: "100vh" }}>
-			<ReactFlow<Node<{ blocks: ContentBlock<any>[]; title: string }>, Edge>
-				nodes={nodes}
-				edges={edges}
-				nodeTypes={nodeTypes}
-				onNodesChange={onNodesChange}
-				onEdgesChange={onEdgesChange}
-				onConnect={onConnect}
-				onConnectEnd={onConnectEnd}
-				onInit={(instance) => setRfInstance(instance)}
-				fitView
-				fitViewOptions={{ padding: 1.5 }}
-			>
-				<MiniMap />
-				<Controls />
-				<Background />
-				<DevTools position="top-left" />
-				<Panel position="top-right" className="flex flex-row gap-2">
-					<Button variant={"outline"} onClick={() => onSave()}>
-						Save
-					</Button>
-					<Button variant={"outline"} onClick={() => onRestore()}>
-						Restore
-					</Button>
-				</Panel>
-			</ReactFlow>
+		<div className="flex flex-row min-h-screen w-full">
+			<div style={{ width: "100%", height: "100%" }}>
+				<ReactFlow
+					nodes={nodes}
+					edges={edges}
+					nodeTypes={nodeTypes}
+					onNodesChange={onNodesChange}
+					onEdgesChange={onEdgesChange}
+					onConnect={onConnect}
+					onConnectEnd={onConnectEnd}
+					onSelectionChange={({ nodes }) => setSelectedNode(nodes[0])}
+					onInit={(instance) => setRfInstance(instance)}
+					fitView
+					fitViewOptions={{ padding: 1.5 }}
+				>
+					<MiniMap />
+					<Controls />
+					<Background />
+					<DevTools position="top-left" />
+					<Panel position="top-right" className="flex flex-row gap-2">
+						<Button variant={"outline"} onClick={() => onSave()}>
+							Save
+						</Button>
+						<Button variant={"outline"} onClick={() => onRestore()}>
+							Restore
+						</Button>
+					</Panel>
+				</ReactFlow>
+			</div>
+			<Inspector node={selectedNode} />
 		</div>
 	);
 }

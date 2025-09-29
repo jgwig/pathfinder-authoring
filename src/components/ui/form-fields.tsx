@@ -17,7 +17,7 @@ export const FormField = ({
 	className,
 }: FormFieldProps) => {
 	return (
-		<div className={cn("space-y-2", className)}>
+		<div className={cn("flex flex-col space-y-2", className)}>
 			<label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
 				{label}
 				{required && <span className="text-destructive ml-1">*</span>}

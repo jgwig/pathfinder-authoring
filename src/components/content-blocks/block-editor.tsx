@@ -15,7 +15,7 @@ import {
 } from "./block-renderers";
 
 interface BlockEditorProps {
-	handleUpdateBlock: (id: string, data: ContentBlock<any>) => void;
+	handleUpdateBlock: (data: ContentBlock<any>) => void;
 	block: ContentBlock<any>;
 }
 
@@ -26,7 +26,7 @@ export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 			type: block.type,
 			data: data,
 		};
-		handleUpdateBlock(block.id, updatedBlock);
+		handleUpdateBlock(updatedBlock);
 	}
 
 	const renderBlockEditor = () => {

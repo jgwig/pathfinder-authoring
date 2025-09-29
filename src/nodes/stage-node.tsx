@@ -27,6 +27,7 @@ import {
 	ContentBlock,
 	contentBlockOptions,
 	ContentBlockType,
+	StageNodeData,
 } from "@/types/content";
 import {
 	Sortable,
@@ -41,86 +42,12 @@ import {
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-function StageNode({
-	id,
-	data,
-}: NodeProps<Node<{ blocks: ContentBlock<any>[]; title: string }>>) {
-	const [blocks, setBlocks] = useState<ContentBlock<any>[]>(data.blocks);
-	const [isSortable, setIsSortabe] = useState<boolean>(false);
-
-	const { updateNodeData } = useReactFlow();
-
-	const connections = useNodeConnections({
-		handleType: "target",
-	});
-
-	useEffect(() => {
-		updateNodeData(id, { blocks: blocks });
-	}, [blocks]);
-
-	function handleAddBlock(type: ContentBlockType) {
-		setBlocks([
-			...blocks,
-			new ContentBlock({ type: type, data: getDefaultDataForType(type) }),
-		]);
-	}
-
-	function handleRemoveBlock(id: string) {
-		setBlocks(blocks.filter((block) => block.id !== id));
-	}
-
-	function handleUpdateBlock(id: string, updatedBlock: ContentBlock<any>) {
-		setBlocks(
-			blocks.map((block) =>
-				block.id === updatedBlock.id ? updatedBlock : block
-			)
-		);
-	}
-
-	// Helper function to get default data for each block type
-	function getDefaultDataForType(type: ContentBlockType): AnyBlockData {
-		switch (type) {
-			case "title":
-				return { text: "", level: 1 as const };
-			case "paragraph":
-				return { text: "" };
-			case "video":
-				return { url: "", caption: "" };
-			case "image":
-				return { url: "", alt: "", caption: "" };
-			case "component":
-				return { component: "" };
-			case "recommendation":
-				return { services: [] };
-			case "externalRecommendation":
-				return { services: [] };
-			case "assessment":
-				return { formId: "", form: [] };
-			case "html":
-				return "";
-			case "intro":
-				return {
-					overview: { title: { text: "", level: 1 as const }, text: [] },
-					steps: { title: { text: "", level: 1 as const }, text: [] },
-				};
-			case "dropdown":
-				return { title: { text: "", level: 1 as const }, content: [] };
-			case "assessmentResult":
-				return {
-					title: { text: "", level: 1 as const },
-					paragraph: { text: "" },
-					cardStyles: "",
-				};
-			default:
-				return "";
-		}
-	}
-
+function StageNode({ id, data }: NodeProps<Node<StageNodeData>>) {
 	return (
-		<BaseNode className={`w-[550px] ${isSortable && "nodrag"}`}>
+		<BaseNode className={`w-[550px]`}>
 			<BaseNodeHeader className="border-b">
 				<BaseNodeHeaderTitle>{data.title}</BaseNodeHeaderTitle>
-				<Button
+				{/* <Button
 					variant="ghost"
 					size="icon"
 					className="size-8"
@@ -131,33 +58,23 @@ function StageNode({
 							isSortable ? "text-black" : "text-muted-foreground"
 						}`}
 					/>
-				</Button>
+				</Button> */}
 				<p className="text-xs text-muted-foreground border px-1 rounded-full">
 					Stage
 				</p>
 			</BaseNodeHeader>
-			<BaseNodeContent className="flex flex-col gap-6">
-				<div className="flex flex-row gap-2">
-					<h3 className="text-lg font-bold">Content</h3>
-					<Tooltip>
-						<TooltipTrigger>
-							<Info className="w-4 h-4 text-muted-foreground" />
-						</TooltipTrigger>
-						<TooltipContent>
-							<p className="text-xs">
-								Add as many content blocks as you wish to make up the content of
-								this stage. You will be able to see a preview of what the stage
-								will look like below.
-							</p>
-						</TooltipContent>
-					</Tooltip>
-				</div>
-				{blocks.length === 0 && (
-					<div className="flex items-center justify-center text-muted-foreground">
+			<BaseNodeContent className="flex min-h-[500px]   flex-col">
+				{data.blocks.length === 0 && (
+					<div className="flex-1 flex h-full items-center justify-center text-muted-foreground">
 						<p>No content</p>
 					</div>
 				)}
-				<Sortable
+				{data.blocks &&
+					data.blocks.map((block, i) => {
+						// console.log(blocks);
+						return <p key={block.id}>{block.type}</p>;
+					})}
+				{/* <Sortable
 					value={blocks}
 					onValueChange={setBlocks}
 					getItemValue={(item) => item.id}
@@ -206,9 +123,9 @@ function StageNode({
 								);
 							})}
 					</SortableContent>
-				</Sortable>
+				</Sortable> */}
 			</BaseNodeContent>
-			<BaseNodeFooter>
+			{/* <BaseNodeFooter>
 				<DropdownMenu>
 					<DropdownMenuTrigger asChild>
 						<Button variant="outline" className="nodrag w-full">
@@ -226,13 +143,26 @@ function StageNode({
 						))}
 					</DropdownMenuContent>
 				</DropdownMenu>
-			</BaseNodeFooter>
+			</BaseNodeFooter> */}
 			{id === "s1" ? (
-				<Handle type="source" position={Position.Right} />
+				<Handle
+					type="source"
+					position={Position.Right}
+					className="bg-green-500"
+					style={{ width: "10px", height: "10px" }}
+				/>
 			) : (
 				<>
-					<Handle type="target" position={Position.Left} />
-					<Handle type="source" position={Position.Right} />
+					<Handle
+						type="target"
+						position={Position.Left}
+						style={{ width: "10px", height: "10px" }}
+					/>
+					<Handle
+						type="source"
+						position={Position.Right}
+						style={{ width: "10px", height: "10px" }}
+					/>
 				</>
 			)}
 		</BaseNode>

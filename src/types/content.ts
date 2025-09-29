@@ -154,6 +154,12 @@ export type Stage = {
 	edges: { id: string; source: string; target: string }[];
 };
 
+// Reusable type for React Flow node data representing a stage
+export type StageNodeData = {
+	blocks: ContentBlock<any>[];
+	title: string;
+};
+
 export const contentBlockOptions: Record<ContentBlockType, string> = {
 	intro: "Intro",
 	title: "Title",
@@ -168,3 +174,41 @@ export const contentBlockOptions: Record<ContentBlockType, string> = {
 	dropdown: "Dropdown",
 	html: "HTML",
 };
+
+export function getDefaultDataForType(type: ContentBlockType): AnyBlockData {
+	switch (type) {
+		case "title":
+			return { text: "", level: 1 as const };
+		case "paragraph":
+			return { text: "" };
+		case "video":
+			return { url: "", caption: "" };
+		case "image":
+			return { url: "", alt: "", caption: "" };
+		case "component":
+			return { component: "" };
+		case "recommendation":
+			return { services: [] };
+		case "externalRecommendation":
+			return { services: [] };
+		case "assessment":
+			return { formId: "", form: [] };
+		case "html":
+			return "";
+		case "intro":
+			return {
+				overview: { title: { text: "", level: 1 as const }, text: [] },
+				steps: { title: { text: "", level: 1 as const }, text: [] },
+			};
+		case "dropdown":
+			return { title: { text: "", level: 1 as const }, content: [] };
+		case "assessmentResult":
+			return {
+				title: { text: "", level: 1 as const },
+				paragraph: { text: "" },
+				cardStyles: "",
+			};
+		default:
+			return "";
+	}
+}
