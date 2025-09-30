@@ -15,10 +15,10 @@ export type ContentBlockType =
 	| "html";
 
 // Minimal placeholder types for referenced but unspecified shapes
-export type ServiceCardConfig = {
-	tailwindClasses?: string;
-};
-
+export interface ServiceCardConfig {
+	type?: "micro" | "slim" | "medium" | "large" | "bundle";
+	theme?: "white" | "grey";
+}
 export type FormItem<T> = {
 	id: string;
 	type: string;

@@ -12,7 +12,7 @@ import {
 	RecommendationBlockRenderer,
 	TitleBlockRenderer,
 	VideoBlockRenderer,
-} from "./block-renderers";
+} from "./block-editor-renderers";
 
 interface BlockEditorProps {
 	handleUpdateBlock: (data: ContentBlock<any>) => void;

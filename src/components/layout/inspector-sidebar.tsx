@@ -23,7 +23,7 @@ import {
 	SortableItem,
 	SortableItemHandle,
 } from "../ui/sortable";
-import { BlockEditor } from "../content-blocks/block-editor";
+import { BlockEditor } from "../content-blocks/editor/block-editor";
 import { TextField } from "../ui/form-fields";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 

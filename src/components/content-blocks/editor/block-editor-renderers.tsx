@@ -17,9 +17,17 @@ import {
 	NumberField,
 	SelectField,
 	UrlField,
+	SearchableSelectField,
+	ComboboxField,
 } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { clinicalComponentsTypes } from "@/components/clinical/clinical-component-registry";
+import { getServices } from "@/actions/actions";
+import { Database, LoaderCircle } from "lucide-react";
+import { Service } from "@/types/service/service";
+import { ServiceServerModel } from "@/types/service/server/serviceServerModel";
+import { ServiceListServerModel } from "@/types/service/server/serviceListServerModel";
 
 interface BlockRendererProps<T> {
 	data: T;
@@ -35,12 +43,12 @@ export const TitleBlockRenderer = ({
 	};
 
 	const headingOptions = [
-		{ label: "H1 - Main Title", value: 1 as const },
-		{ label: "H2 - Section Title", value: 2 as const },
-		{ label: "H3 - Subsection", value: 3 as const },
-		{ label: "H4 - Minor Heading", value: 4 as const },
-		{ label: "H5 - Small Heading", value: 5 as const },
-		{ label: "H6 - Smallest Heading", value: 6 as const },
+		{ label: "H1 - Main Title", value: 1 },
+		{ label: "H2 - Section Title", value: 2 },
+		{ label: "H3 - Subsection", value: 3 },
+		{ label: "H4 - Minor Heading", value: 4 },
+		{ label: "H5 - Small Heading", value: 5 },
+		{ label: "H6 - Smallest Heading", value: 6 },
 	];
 
 	return (
@@ -185,13 +193,20 @@ export const ComponentBlockRenderer = ({
 		onChange({ ...data, [field]: value });
 	};
 
+	const componentOptions = Object.entries(clinicalComponentsTypes).map(
+		([key, value]) => ({
+			label: value,
+			value: key,
+		})
+	);
+
 	return (
 		<div className="space-y-4">
-			<TextField
-				label="Component Name"
-				value={data.component || ""}
+			<SelectField
+				label="Component"
+				value={data.component || "sitStandTest"}
 				onChange={(value) => handleChange("component", value)}
-				placeholder="e.g. PageUnpaidCarersMorayAssessmentComponent"
+				options={componentOptions}
 				required
 			/>
 		</div>
@@ -202,6 +217,39 @@ export const RecommendationBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<RecommendationBlockData>) => {
+	const [serviceOptions, setServiceOptions] = useState<
+		{ label: string; value: string }[]
+	>([]);
+	const [loading, setLoading] = useState(false);
+	const [council, setCouncil] = useState<string>("lothian");
+
+	useEffect(() => {
+		fetchServices();
+	}, []);
+
+	useEffect(() => {
+		removeAllServices();
+		fetchServices();
+	}, [council]);
+
+	async function fetchServices() {
+		setLoading(true);
+		const data: ServiceListServerModel = await getServices(council);
+		if (!data) return;
+		const services: Service[] = data.services.map(
+			(serverModel: ServiceServerModel) =>
+				Service.fromServiceServerModel(new ServiceServerModel(serverModel))
+		);
+		setServiceOptions(
+			services.map((service) => ({
+				label: service.title,
+				value: service.name,
+			}))
+		);
+
+		setLoading(false);
+	}
+
 	const handleServicesChange = (services: typeof data.services) => {
 		onChange({ ...data, services });
 	};
@@ -214,56 +262,119 @@ export const RecommendationBlockRenderer = ({
 		handleServicesChange(data.services.filter((_, i) => i !== index));
 	};
 
+	const removeAllServices = () => {
+		handleServicesChange([]);
+	};
+
 	const updateService = (index: number, field: string, value: any) => {
 		const updatedServices = [...data.services];
-		updatedServices[index] = { ...updatedServices[index], [field]: value };
+		if (field === "config.type") {
+			updatedServices[index] = {
+				...updatedServices[index],
+				config: {
+					...updatedServices[index].config,
+					type: value,
+				},
+			};
+		} else {
+			updatedServices[index] = { ...updatedServices[index], [field]: value };
+		}
 		handleServicesChange(updatedServices);
 	};
 
+	const cardTypeOptions = [
+		{
+			label: "Micro",
+			value: "micro",
+		},
+		{
+			label: "Slim",
+			value: "slim",
+		},
+		{
+			label: "Medium",
+			value: "medium",
+		},
+		{
+			label: "Large",
+			value: "large",
+		},
+	];
+
+	const councilOptions = [
+		{
+			label: "Moray",
+			value: "moray",
+		},
+		{
+			label: "Lothian",
+			value: "lothian",
+		},
+		{
+			label: "Lanarkshire",
+			value: "lanarkshire",
+		},
+	];
+
 	return (
 		<div className="space-y-4">
-			<div className="flex items-center justify-between">
-				<h3 className="text-sm font-medium">Services</h3>
-				<Button type="button" onClick={addService} size="sm" variant="outline">
-					Add Service
-				</Button>
-			</div>
-
-			{data.services.map((service, index) => (
-				<div key={index} className="p-4 border rounded-lg space-y-3">
+			<SelectField
+				label="Council"
+				options={councilOptions}
+				value={council}
+				onChange={(value) => setCouncil(value)}
+			/>
+			{loading ? (
+				<div className="flex items-center justify-center">
+					<LoaderCircle className="w-8 h-8 animate-spin" />
+				</div>
+			) : (
+				<>
 					<div className="flex items-center justify-between">
-						<span className="text-sm font-medium">Service {index + 1}</span>
+						<h3 className="text-sm font-medium">Services</h3>
 						<Button
 							type="button"
-							onClick={() => removeService(index)}
+							onClick={addService}
 							size="sm"
-							variant="destructive"
+							variant="outline"
 						>
-							Remove
+							Add Service
 						</Button>
 					</div>
 
-					<TextField
-						label="Service Slug"
-						value={service.slug}
-						onChange={(value) => updateService(index, "slug", value)}
-						placeholder="service-slug"
-						required
-					/>
+					{data.services.map((service, index) => (
+						<div key={index} className="p-4 border rounded-lg space-y-3">
+							<div className="flex items-center justify-between">
+								<span className="text-sm font-medium">Service {index + 1}</span>
+								<Button
+									type="button"
+									onClick={() => removeService(index)}
+									size="sm"
+									variant="destructive"
+								>
+									Remove
+								</Button>
+							</div>
 
-					<TextField
-						label="Tailwind Classes (Optional)"
-						value={service.config?.tailwindClasses || ""}
-						onChange={(value) =>
-							updateService(index, "config", {
-								...service.config,
-								tailwindClasses: value,
-							})
-						}
-						placeholder="text-blue-500 bg-gray-100"
-					/>
-				</div>
-			))}
+							<ComboboxField
+								label="Select Service"
+								value={service.slug}
+								onChange={(value) => updateService(index, "config.type", value)}
+								options={serviceOptions}
+								placeholder="Choose a service..."
+								searchPlaceholder="Search services..."
+								required
+							/>
+							<SelectField
+								label="Card Type"
+								options={cardTypeOptions}
+								value={service.config?.type || "micro"}
+								onChange={(value) => updateService(index, "config.type", value)}
+							/>
+						</div>
+					))}
+				</>
+			)}
 		</div>
 	);
 };

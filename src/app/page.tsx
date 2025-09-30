@@ -142,6 +142,11 @@ export default function Home() {
 					onSelectionChange={({ nodes }) => setSelectedNode(nodes[0])}
 					onInit={(instance) => setRfInstance(instance)}
 					fitView
+					// allow zooming out much further by setting a low minZoom
+					minZoom={0.2}
+					// optionally keep a reasonable max zoom; increase if you want to zoom in more
+					maxZoom={1}
+					// keep padding for fitView but remove the restrictive maxZoom there
 					fitViewOptions={{ padding: 1.5 }}
 				>
 					<MiniMap />
