@@ -3,7 +3,7 @@ import { Button } from "../ui/button";
 
 export function TimedUpAndGoTest() {
 	return (
-		<div className="bg-loth-theme text-white rounded-3xl p-8 gap-8 flex flex-col items-center max-w-full shadow-md  relative">
+		<div className="bg-theme text-white rounded-3xl p-8 gap-8 flex flex-col items-center max-w-full shadow-md  relative">
 			<h1 className="text-center font-bold text-3xl my-0 p-0">
 				Timed Up and Go Test
 			</h1>

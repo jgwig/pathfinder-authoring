@@ -8,6 +8,7 @@ export const ServicesContext = createContext<{
 	setCouncil: (council: string) => void;
 	loading: boolean;
 	setLoading: (loading: boolean) => void;
+	getServiceBySlug: (slug: string) => Service | undefined;
 }>({
 	services: undefined,
 	setServices: () => {},
@@ -15,4 +16,5 @@ export const ServicesContext = createContext<{
 	setCouncil: () => {},
 	loading: false,
 	setLoading: () => {},
+	getServiceBySlug: () => undefined,
 });

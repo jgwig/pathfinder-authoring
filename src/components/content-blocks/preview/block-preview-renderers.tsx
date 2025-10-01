@@ -18,6 +18,12 @@ import Image from "next/image";
 
 import ReactPlayer from "react-player";
 import { useEffect, useState, type ComponentType } from "react";
+import { useServices } from "@/providers/services/use-services";
+import { LoaderIcon } from "lucide-react";
+import Link from "next/link";
+import clsx from "clsx";
+
+import "./styles.css";
 
 interface BlockPreviewProps<T> {
 	data: T;
@@ -153,33 +159,65 @@ export const RecommendationBlockRenderer = ({
 }: BlockPreviewProps<RecommendationBlockData>) => {
 	const { services } = data;
 
-	const [loading, setLoading] = useState(false);
+	const { loading, getServiceBySlug } = useServices();
 
-	// useEffect(()=>{
-	// 	async function fetchServices(){
-	// 		setLoading(true);
-	// 				const data: ServiceListServerModel = await getServices(council);
-	// 				if (!data) return;
-	// 				const services: Service[] = data.services.map(
-	// 					(serverModel: ServiceServerModel) =>
-	// 						Service.fromServiceServerModel(new ServiceServerModel(serverModel))
-	// 				);
-	// 				setServiceOptions(
-	// 					services.map((service) => ({
-	// 						label: service.title,
-	// 						value: service.name,
-	// 					}))
-	// 				);
+	// Handle loading state
+	if (loading) {
+		return <LoaderIcon className="animate-spin" />;
+	}
 
-	// 				setLoading(false);
-	// 	}
-	// },[])
-
+	// Main component render
 	return (
-		<div className="flex flex-col gap-4">
+		<div className="flex w-full flex-col md:flex-row gap-4 justify-center">
 			{services.map((service, i) => {
-				if (service.slug) {
-					return <p key={service.slug + i}>{service.slug}</p>;
+				const serviceData = getServiceBySlug(service.slug);
+				if (serviceData) {
+					return (
+						<div
+							key={`service-${service.slug}-${i}`}
+							className="relative h-full"
+						>
+							<div
+								className={clsx(
+									"service-card",
+									service.config?.type
+										? `service-card-${service.config.type}`
+										: "service-card-medium",
+									service.config?.theme
+										? `service-card-${service.config.theme}`
+										: "service-card-white"
+								)}
+							>
+								<div className="service-card-image-container">
+									{/* SERVICE IMAGE */}
+									<img
+										className="service-card-image"
+										src={serviceData.image}
+										alt={
+											serviceData.name
+												? `Image representing ${serviceData.name}`
+												: "Service image"
+										}
+									/>
+								</div>
+
+								{/* SERVICE DETAILS */}
+								<div className="service-card-content">
+									<h2 className="title">{serviceData.title}</h2>
+									{serviceData.summary?.headline && (
+										<h3 className="subtitle">
+											{serviceData.summary?.headline}
+										</h3>
+									)}
+									{serviceData.summary?.description && (
+										<p className="description">
+											{serviceData.summary?.description}
+										</p>
+									)}
+								</div>
+							</div>
+						</div>
+					);
 				}
 			})}
 		</div>

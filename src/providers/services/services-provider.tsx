@@ -33,6 +33,10 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
 		fetchServices();
 	}, [council]);
 
+	function getServiceBySlug(slug: string): Service | undefined {
+		return services?.find((service) => service.name === slug);
+	}
+
 	return (
 		<ServicesContext
 			value={{
@@ -42,6 +46,7 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
 				setCouncil,
 				setLoading,
 				setServices,
+				getServiceBySlug,
 			}}
 		>
 			{children}

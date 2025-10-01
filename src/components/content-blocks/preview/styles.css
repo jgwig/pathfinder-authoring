@@ -1,0 +1,217 @@
+.service-card {
+	@apply h-full lg:max-h-[550px] rounded flex flex-col overflow-hidden p-0 lg:flex-row;
+
+	&.service-card-white {
+		@apply bg-gray-50;
+	}
+
+	&.service-card-grey {
+		@apply bg-medium-light-grey;
+	}
+
+	.service-card-image-container {
+		@apply h-48 w-auto relative lg:w-1/2 lg:h-auto;
+
+		.service-card-image {
+			@apply h-full w-full object-cover object-center;
+		}
+
+		.service-icon-top-left {
+			@apply hidden lg:block;
+		}
+
+		.service-icon-top-right {
+			@apply block lg:hidden;
+		}
+	}
+
+	.service-card-content {
+		@apply w-auto p-10 flex flex-col flex-1 lg:w-1/2;
+
+		h2 {
+			@apply m-0 p-0;
+		}
+
+		h3 {
+			@apply mt-2 mb-0 p-0;
+		}
+
+		.title {
+			@apply text-theme text-2xl font-medium;
+		}
+
+		.subtitle {
+			@apply text-base font-semibold;
+		}
+
+		.description {
+			@apply mb-0 line-clamp-[8];
+		}
+
+		.testimonial {
+			@apply mb-0 flex-1 italic;
+
+			.testimonial-author {
+				@apply font-semibold;
+			}
+		}
+
+		app-button {
+			@apply mt-6;
+		}
+
+		app-live-connection-completeness,
+		app-email-connection-completeness {
+			@apply block mt-8;
+		}
+	}
+
+	&.service-card-medium,
+	&.service-card-slim,
+	&.service-card-micro {
+		@apply flex-col  h-full max-h-none;
+
+		.service-card-content {
+			@apply w-auto;
+		}
+
+		.service-card-image-container {
+			@apply h-60 w-auto;
+
+			.service-icon-top-left {
+				@apply hidden;
+			}
+			.service-icon-top-right {
+				@apply block;
+			}
+		}
+	}
+
+	&.service-card-medium,
+	&.service-card-slim {
+		.service-card-content {
+			.description {
+				@apply line-clamp-6;
+			}
+		}
+	}
+
+	&.service-card-medium {
+		@apply max-w-[500px];
+	}
+
+	&.service-card-slim {
+		@apply max-w-[300px];
+
+		.service-card-content {
+			@apply p-4;
+		}
+	}
+
+	&.service-card-slim,
+	&.service-card-micro {
+		app-button {
+			@apply mt-4;
+		}
+	}
+
+	&.service-card-micro {
+		@apply w-[250px];
+
+		.service-card-image-container {
+			@apply hidden;
+		}
+
+		.service-card-content {
+			@apply p-4;
+
+			h2 {
+				@apply text-base;
+			}
+
+			p {
+				@apply text-sm;
+			}
+
+			.subtitle,
+			.testimonial {
+				@apply hidden;
+			}
+
+			.description {
+				@apply line-clamp-4;
+			}
+		}
+	}
+
+	&.service-card-bundle {
+		@apply grid grid-cols-3 h-40 overflow-hidden;
+
+		.service-card-image-container {
+			@apply h-auto w-auto col-span-1;
+
+			.service-icon-top-left {
+				@apply hidden;
+			}
+
+			.service-icon-bottom-left {
+				@apply hidden;
+			}
+		}
+
+		.service-card-content {
+			@apply w-full p-4 col-span-2;
+
+			h2 {
+				@apply text-base line-clamp-1;
+			}
+
+			p {
+				@apply text-sm;
+			}
+
+			.subtitle,
+			.testimonial {
+				@apply hidden;
+			}
+
+			.description {
+				@apply line-clamp-3;
+			}
+		}
+	}
+}
+
+.service-card-skeleton {
+	.service-card-skeleton-vertical {
+		@apply block lg:hidden;
+	}
+
+	.service-card-skeleton-horizontal {
+		@apply hidden lg:block;
+	}
+
+	&.service-card-skeleton-medium,
+	&.service-card-skeleton-slim,
+	&.service-card-skeleton-micro {
+		.service-card-skeleton-vertical {
+			@apply block;
+		}
+
+		.service-card-skeleton-horizontal {
+			@apply hidden;
+		}
+	}
+
+	&.service-card-skeleton-medium {
+		@apply max-w-[500px];
+	}
+
+	&.service-card-skeleton-slim {
+		@apply max-w-[300px];
+	}
+
+	&.service-card-skeleton-micro {
+		@apply max-w-[250px];
+	}
+}

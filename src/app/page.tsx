@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
 	ReactFlow,
 	applyNodeChanges,
@@ -140,6 +140,15 @@ export default function Home() {
 	);
 
 	const { setCouncil, council, loading } = useServices();
+
+	// Update data-theme attribute when council changes
+	useEffect(() => {
+		if (council) {
+			document.documentElement.setAttribute("data-theme", council);
+		} else {
+			document.documentElement.removeAttribute("data-theme");
+		}
+	}, [council]);
 
 	const councilOptions = [
 		{
