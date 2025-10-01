@@ -17,7 +17,7 @@ import {
 import Image from "next/image";
 
 import ReactPlayer from "react-player";
-import type { ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 
 interface BlockPreviewProps<T> {
 	data: T;
@@ -153,11 +153,35 @@ export const RecommendationBlockRenderer = ({
 }: BlockPreviewProps<RecommendationBlockData>) => {
 	const { services } = data;
 
+	const [loading, setLoading] = useState(false);
+
+	// useEffect(()=>{
+	// 	async function fetchServices(){
+	// 		setLoading(true);
+	// 				const data: ServiceListServerModel = await getServices(council);
+	// 				if (!data) return;
+	// 				const services: Service[] = data.services.map(
+	// 					(serverModel: ServiceServerModel) =>
+	// 						Service.fromServiceServerModel(new ServiceServerModel(serverModel))
+	// 				);
+	// 				setServiceOptions(
+	// 					services.map((service) => ({
+	// 						label: service.title,
+	// 						value: service.name,
+	// 					}))
+	// 				);
+
+	// 				setLoading(false);
+	// 	}
+	// },[])
+
 	return (
 		<div className="flex flex-col gap-4">
-			{services.map((service) => (
-				<p key={service.slug}>{service.config?.type}</p>
-			))}
+			{services.map((service, i) => {
+				if (service.slug) {
+					return <p key={service.slug + i}>{service.slug}</p>;
+				}
+			})}
 		</div>
 	);
 };

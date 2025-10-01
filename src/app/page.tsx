@@ -25,6 +25,17 @@ import { DevTools } from "@/components/devtools";
 import { ContentBlock, StageNodeData } from "@/types/content";
 import { Button } from "@/components/ui/button";
 import { Inspector } from "@/components/layout/inspector-sidebar";
+import {
+	Select,
+	SelectContent,
+	SelectGroup,
+	SelectItem,
+	SelectLabel,
+	SelectTrigger,
+	SelectValue,
+} from "@/components/ui/select";
+import { useServices } from "@/providers/services/use-services";
+import { LoaderCircle } from "lucide-react";
 
 const nodeTypes = {
 	stageNode: StageNode,
@@ -128,6 +139,23 @@ export default function Home() {
 		[screenToFlowPosition]
 	);
 
+	const { setCouncil, council, loading } = useServices();
+
+	const councilOptions = [
+		{
+			label: "Moray",
+			value: "moray",
+		},
+		{
+			label: "Lothian",
+			value: "lothian",
+		},
+		{
+			label: "Lanarkshire",
+			value: "lanarkshire",
+		},
+	];
+
 	return (
 		<div className="flex flex-row min-h-screen w-full">
 			<div style={{ width: "100%", height: "100%" }}>
@@ -160,6 +188,25 @@ export default function Home() {
 						<Button variant={"outline"} onClick={() => onRestore()}>
 							Restore
 						</Button>
+						<Select
+							value={council}
+							onValueChange={(value) => setCouncil(value)}
+						>
+							<SelectTrigger className="bg-white font-medium">
+								<SelectValue placeholder="Select a council" />
+								{loading && <LoaderCircle className="w-4 h-4 animate-spin" />}
+							</SelectTrigger>
+							<SelectContent>
+								<SelectGroup>
+									<SelectLabel>Council</SelectLabel>
+									{councilOptions.map((option) => (
+										<SelectItem key={option.value} value={option.value}>
+											{option.label}
+										</SelectItem>
+									))}
+								</SelectGroup>
+							</SelectContent>
+						</Select>
 					</Panel>
 				</ReactFlow>
 			</div>

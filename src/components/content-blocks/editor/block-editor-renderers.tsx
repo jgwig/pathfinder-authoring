@@ -14,10 +14,8 @@ import {
 import {
 	TextField,
 	TextAreaField,
-	NumberField,
 	SelectField,
 	UrlField,
-	SearchableSelectField,
 	ComboboxField,
 } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
@@ -28,6 +26,7 @@ import { Database, LoaderCircle } from "lucide-react";
 import { Service } from "@/types/service/service";
 import { ServiceServerModel } from "@/types/service/server/serviceServerModel";
 import { ServiceListServerModel } from "@/types/service/server/serviceListServerModel";
+import { useServices } from "@/providers/services/use-services";
 
 interface BlockRendererProps<T> {
 	data: T;
@@ -43,12 +42,12 @@ export const TitleBlockRenderer = ({
 	};
 
 	const headingOptions = [
-		{ label: "H1 - Main Title", value: 1 },
-		{ label: "H2 - Section Title", value: 2 },
-		{ label: "H3 - Subsection", value: 3 },
-		{ label: "H4 - Minor Heading", value: 4 },
-		{ label: "H5 - Small Heading", value: 5 },
-		{ label: "H6 - Smallest Heading", value: 6 },
+		{ label: "H1 - Main Title", value: "1" },
+		{ label: "H2 - Section Title", value: "2" },
+		{ label: "H3 - Subsection", value: "3" },
+		{ label: "H4 - Minor Heading", value: "4" },
+		{ label: "H5 - Small Heading", value: "5" },
+		{ label: "H6 - Smallest Heading", value: "6" },
 	];
 
 	return (
@@ -62,7 +61,7 @@ export const TitleBlockRenderer = ({
 			/>
 			<SelectField
 				label="Heading Level"
-				value={data.level || 1}
+				value={data.level.toString() || "1"}
 				onChange={(value) => handleChange("level", value)}
 				options={headingOptions}
 				required
@@ -217,58 +216,31 @@ export const RecommendationBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<RecommendationBlockData>) => {
-	const [serviceOptions, setServiceOptions] = useState<
-		{ label: string; value: string }[]
-	>([]);
-	const [loading, setLoading] = useState(false);
-	const [council, setCouncil] = useState<string>("lothian");
+	const { loading, council, services } = useServices();
 
 	useEffect(() => {
-		fetchServices();
-	}, []);
-
-	useEffect(() => {
-		removeAllServices();
-		fetchServices();
+		// Remove all services when council changes (because they won't exist in that council)
+		handleServicesChange([]);
 	}, [council]);
-
-	async function fetchServices() {
-		setLoading(true);
-		const data: ServiceListServerModel = await getServices(council);
-		if (!data) return;
-		const services: Service[] = data.services.map(
-			(serverModel: ServiceServerModel) =>
-				Service.fromServiceServerModel(new ServiceServerModel(serverModel))
-		);
-		setServiceOptions(
-			services.map((service) => ({
-				label: service.title,
-				value: service.name,
-			}))
-		);
-
-		setLoading(false);
-	}
 
 	const handleServicesChange = (services: typeof data.services) => {
 		onChange({ ...data, services });
 	};
 
 	const addService = () => {
-		handleServicesChange([...data.services, { slug: "" }]);
+		handleServicesChange([
+			...data.services,
+			{ slug: "", config: { type: "medium" } },
+		]);
 	};
 
 	const removeService = (index: number) => {
 		handleServicesChange(data.services.filter((_, i) => i !== index));
 	};
 
-	const removeAllServices = () => {
-		handleServicesChange([]);
-	};
-
 	const updateService = (index: number, field: string, value: any) => {
 		const updatedServices = [...data.services];
-		if (field === "config.type") {
+		if (field === "type") {
 			updatedServices[index] = {
 				...updatedServices[index],
 				config: {
@@ -301,29 +273,8 @@ export const RecommendationBlockRenderer = ({
 		},
 	];
 
-	const councilOptions = [
-		{
-			label: "Moray",
-			value: "moray",
-		},
-		{
-			label: "Lothian",
-			value: "lothian",
-		},
-		{
-			label: "Lanarkshire",
-			value: "lanarkshire",
-		},
-	];
-
 	return (
 		<div className="space-y-4">
-			<SelectField
-				label="Council"
-				options={councilOptions}
-				value={council}
-				onChange={(value) => setCouncil(value)}
-			/>
 			{loading ? (
 				<div className="flex items-center justify-center">
 					<LoaderCircle className="w-8 h-8 animate-spin" />
@@ -359,8 +310,13 @@ export const RecommendationBlockRenderer = ({
 							<ComboboxField
 								label="Select Service"
 								value={service.slug}
-								onChange={(value) => updateService(index, "config.type", value)}
-								options={serviceOptions}
+								onChange={(value) => updateService(index, "slug", value)}
+								options={
+									services?.map((service) => ({
+										label: service.title,
+										value: service.name,
+									})) || []
+								}
 								placeholder="Choose a service..."
 								searchPlaceholder="Search services..."
 								required
@@ -368,8 +324,8 @@ export const RecommendationBlockRenderer = ({
 							<SelectField
 								label="Card Type"
 								options={cardTypeOptions}
-								value={service.config?.type || "micro"}
-								onChange={(value) => updateService(index, "config.type", value)}
+								value={service.config?.type || "medium"}
+								onChange={(value) => updateService(index, "type", value)}
 							/>
 						</div>
 					))}

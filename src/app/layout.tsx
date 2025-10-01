@@ -5,6 +5,7 @@ import { AppSidebar } from "@/components/layout/app-sidebar";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactFlowProvider } from "@xyflow/react";
+import { ServicesProvider } from "@/providers/services/services-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -29,15 +30,17 @@ export default function RootLayout({
 	return (
 		<SidebarProvider defaultOpen={false}>
 			<ReactFlowProvider>
-				<html lang="en">
-					<body
-						className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-					>
-						<AppSidebar />
-						<SidebarTrigger />
-						{children}
-					</body>
-				</html>
+				<ServicesProvider>
+					<html lang="en">
+						<body
+							className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+						>
+							<AppSidebar />
+							<SidebarTrigger />
+							{children}
+						</body>
+					</html>
+				</ServicesProvider>
 			</ReactFlowProvider>
 		</SidebarProvider>
 	);
