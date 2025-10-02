@@ -6,6 +6,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReactFlowProvider } from "@xyflow/react";
 import { ServicesProvider } from "@/providers/services/services-provider";
+import { PathfinderDataProvider } from "@/providers/pathfinder-data/pathfinder-data-provider";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -31,15 +32,17 @@ export default function RootLayout({
 		<SidebarProvider defaultOpen={false}>
 			<ReactFlowProvider>
 				<ServicesProvider>
-					<html lang="en">
-						<body
-							className={`${geistSans.variable} ${geistMono.variable} antialiased `}
-						>
-							<AppSidebar />
-							<SidebarTrigger />
-							{children}
-						</body>
-					</html>
+					<PathfinderDataProvider>
+						<html lang="en">
+							<body
+								className={`${geistSans.variable} ${geistMono.variable} antialiased `}
+							>
+								<AppSidebar />
+								<SidebarTrigger />
+								{children}
+							</body>
+						</html>
+					</PathfinderDataProvider>
 				</ServicesProvider>
 			</ReactFlowProvider>
 		</SidebarProvider>

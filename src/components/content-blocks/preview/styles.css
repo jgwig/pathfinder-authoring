@@ -1,5 +1,5 @@
 .service-card {
-	@apply h-full lg:max-h-[550px] rounded flex flex-col overflow-hidden p-0 lg:flex-row;
+	@apply h-full lg:max-h-[550px] rounded-lg flex flex-col overflow-hidden p-0 lg:flex-row border;
 
 	&.service-card-white {
 		@apply bg-gray-50;

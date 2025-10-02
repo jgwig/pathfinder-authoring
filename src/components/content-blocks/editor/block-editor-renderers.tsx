@@ -218,10 +218,10 @@ export const RecommendationBlockRenderer = ({
 }: BlockRendererProps<RecommendationBlockData>) => {
 	const { loading, council, services } = useServices();
 
-	useEffect(() => {
-		// Remove all services when council changes (because they won't exist in that council)
-		handleServicesChange([]);
-	}, [council]);
+	// useEffect(() => {
+	// 	// Remove all services when council changes (because they won't exist in that council)
+	// 	handleServicesChange([]);
+	// }, [council]);
 
 	const handleServicesChange = (services: typeof data.services) => {
 		onChange({ ...data, services });

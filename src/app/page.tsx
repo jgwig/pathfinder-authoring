@@ -36,6 +36,8 @@ import {
 } from "@/components/ui/select";
 import { useServices } from "@/providers/services/use-services";
 import { LoaderCircle } from "lucide-react";
+import { usePathfinderData } from "@/providers/pathfinder-data/use-pathfinder-data-provider";
+import { PathfinderData } from "@/providers/pathfinder-data/pathfinder-data-context";
 
 const nodeTypes = {
 	stageNode: StageNode,
@@ -141,6 +143,8 @@ export default function Home() {
 
 	const { setCouncil, council, loading } = useServices();
 
+	const { savePathfinder, loadedPathfinder } = usePathfinderData();
+
 	// Update data-theme attribute when council changes
 	useEffect(() => {
 		if (council) {
@@ -149,6 +153,20 @@ export default function Home() {
 			document.documentElement.removeAttribute("data-theme");
 		}
 	}, [council]);
+
+	useEffect(() => {
+		if (!loadedPathfinder) {
+			setNodes(initialNodes);
+			setEdges([]);
+			return;
+		}
+		console.log(loadedPathfinder);
+
+		const { x = 0, y = 0, zoom = 1 } = loadedPathfinder.flow.viewport;
+		setNodes(loadedPathfinder.flow.nodes || []);
+		setEdges(loadedPathfinder.flow.edges || []);
+		setViewport({ x, y, zoom });
+	}, [loadedPathfinder]);
 
 	const councilOptions = [
 		{
@@ -164,6 +182,17 @@ export default function Home() {
 			value: "lanarkshire",
 		},
 	];
+
+	function save() {
+		if (rfInstance) {
+			const flow = rfInstance.toObject();
+			const data = {
+				name: "New Pathfinder",
+				flow: flow,
+			};
+			savePathfinder(data);
+		}
+	}
 
 	return (
 		<div className="flex flex-row min-h-screen w-full">
@@ -191,7 +220,7 @@ export default function Home() {
 					<Background />
 					<DevTools position="top-left" />
 					<Panel position="top-right" className="flex flex-row gap-2">
-						<Button variant={"outline"} onClick={() => onSave()}>
+						<Button variant={"outline"} onClick={() => save()}>
 							Save
 						</Button>
 						<Button variant={"outline"} onClick={() => onRestore()}>
