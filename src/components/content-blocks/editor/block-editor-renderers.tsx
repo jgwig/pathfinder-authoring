@@ -10,6 +10,8 @@ import {
 	DropdownBlockData,
 	AssessmentResultData,
 	IntroBlockData,
+	FormItemType,
+	FormItem,
 } from "@/types/content";
 import {
 	TextField,
@@ -17,6 +19,8 @@ import {
 	SelectField,
 	UrlField,
 	ComboboxField,
+	ButtonSelectField,
+	CheckboxField,
 } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState, useMemo } from "react";
@@ -27,6 +31,13 @@ import { Service } from "@/types/service/service";
 import { ServiceServerModel } from "@/types/service/server/serviceServerModel";
 import { ServiceListServerModel } from "@/types/service/server/serviceListServerModel";
 import { useServices } from "@/providers/services/use-services";
+import {
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { AssessmentField } from "@/components/ui/assessment-field";
 
 interface BlockRendererProps<T> {
 	data: T;
@@ -430,6 +441,44 @@ export const AssessmentBlockRenderer = ({
 		onChange({ ...data, [field]: value });
 	};
 
+	const handleFieldsChange = (form: FormItem[]) => {
+		onChange({ ...data, form });
+	};
+
+	const addFormField = (type: FormItemType) => {
+		handleFieldsChange([
+			...data.form,
+			{ type: type, name: "", label: "", id: crypto.randomUUID() },
+		]);
+	};
+
+	const removeFormField = (id: string) => {
+		console.log("being called");
+		handleFieldsChange(data.form.filter((field) => field.id !== id));
+	};
+
+	const updateFormField = (id: string, updatedField: FormItem) => {
+		const updatedForm = data.form.map((field) =>
+			field.id === id ? updatedField : field
+		);
+		handleFieldsChange(updatedForm);
+	};
+
+	const formItemOptions: { label: string; value: FormItemType }[] = [
+		{
+			label: "Button Select",
+			value: "buttonSelect",
+		},
+		{
+			label: "Dropdown Select",
+			value: "dropdownSelect",
+		},
+		{
+			label: "Checkbox",
+			value: "checkbox",
+		},
+	];
+
 	return (
 		<div className="space-y-4">
 			<TextField
@@ -439,12 +488,36 @@ export const AssessmentBlockRenderer = ({
 				placeholder="unique-form-id"
 				required
 			/>
-			<div className="p-4 bg-muted rounded-lg">
-				<p className="text-sm text-muted-foreground">
-					Form items configuration is complex and should be implemented as a
-					separate form builder component.
-				</p>
-			</div>
+			<DropdownMenu>
+				<DropdownMenuTrigger asChild>
+					<Button variant="outline" className=" w-full">
+						Add Field
+					</Button>
+				</DropdownMenuTrigger>
+				<DropdownMenuContent>
+					{formItemOptions.map((option) => (
+						<DropdownMenuItem
+							key={option.value}
+							onClick={() => addFormField(option.value as FormItemType)}
+						>
+							{option.label}
+						</DropdownMenuItem>
+					))}
+				</DropdownMenuContent>
+			</DropdownMenu>
+			{data.form.map((field) => {
+				return (
+					<div key={field.id} className="p-4 border rounded-lg">
+						<AssessmentField
+							field={field}
+							removeField={removeFormField}
+							onChange={(updatedField) =>
+								updateFormField(field.id, updatedField)
+							}
+						/>
+					</div>
+				);
+			})}
 		</div>
 	);
 };

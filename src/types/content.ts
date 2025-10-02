@@ -19,11 +19,14 @@ export interface ServiceCardConfig {
 	type?: "micro" | "slim" | "medium" | "large" | "bundle";
 	theme?: "white" | "grey";
 }
-export type FormItem<T> = {
+
+export type FormItemType = "buttonSelect" | "dropdownSelect" | "checkbox";
+export type FormItem = {
+	name: string;
+	type: FormItemType;
+	label: string;
 	id: string;
-	type: string;
-	label?: string;
-	props?: T;
+	options?: string[];
 };
 
 export class ContentBlock<T> {
@@ -125,7 +128,7 @@ export interface DropdownBlockData {
 
 export interface AssessmentBlockData {
 	formId: string; // Unique ID for the form, used to store and retrieve form data
-	form: FormItem<any>[];
+	form: FormItem[];
 }
 
 export type AssessmentResultData = {
