@@ -22,6 +22,12 @@ import { useServices } from "@/providers/services/use-services";
 import { LoaderIcon } from "lucide-react";
 import Link from "next/link";
 import clsx from "clsx";
+import {
+	ButtonSelectField,
+	SelectField,
+	CheckboxField,
+} from "@/components/ui/form-fields";
+import type { FormItem } from "@/types/content";
 
 import "./styles.css";
 
@@ -237,7 +243,126 @@ export const AssessmentBlockRenderer = ({
 }: BlockPreviewProps<AssessmentBlockData>) => {
 	const { formId, form } = data;
 
-	return <p>{formId}</p>;
+	// State to manage form values
+	const [formValues, setFormValues] = useState<
+		Record<string, string | boolean | undefined>
+	>({});
+
+	// Initialize form values
+	useEffect(() => {
+		const initialValues: Record<string, string | boolean | undefined> = {};
+		form.forEach((field) => {
+			if (field.type === "checkbox") {
+				initialValues[field.id] = false;
+			} else {
+				// Use empty string for select fields, but we'll handle it specially
+				initialValues[field.id] = "";
+			}
+		});
+		setFormValues(initialValues);
+	}, [form]);
+
+	// Handle form field changes
+	const handleFieldChange = (fieldId: string, value: string | boolean) => {
+		setFormValues((prev) => ({
+			...prev,
+			[fieldId]: value,
+		}));
+	};
+
+	useEffect(() => {
+		console.log(formValues);
+	}, [formValues]);
+
+	// Render individual form field based on type
+	const renderFormField = (field: FormItem) => {
+		const { id, type, label, options = [] } = field;
+
+		switch (type) {
+			case "buttonSelect":
+				return (
+					<ButtonSelectField
+						key={id}
+						label={label}
+						value={(formValues[id] as string) || ""}
+						onChange={(value) => handleFieldChange(id, value)}
+						options={options.map((option) => ({
+							label: option,
+							value: option,
+						}))}
+						className="mb-4"
+					/>
+				);
+
+			case "dropdownSelect":
+				return (
+					<SelectField
+						key={id}
+						label={label}
+						value={formValues[id] as string | ""}
+						onChange={(value) => handleFieldChange(id, value)}
+						options={options.map((option) => {
+							if (option !== "") {
+								return {
+									label: option,
+									value: option,
+								};
+							} else {
+								return {
+									label: "New Option",
+									value: "New Option",
+								};
+							}
+						})}
+						className="mb-4"
+					/>
+				);
+
+			case "checkbox":
+				return (
+					<CheckboxField
+						key={id}
+						label={label}
+						checked={(formValues[id] as boolean) || false}
+						onChange={(checked) => handleFieldChange(id, checked)}
+						className="mb-4"
+					/>
+				);
+
+			default:
+				return (
+					<div
+						key={id}
+						className="mb-4 p-3 bg-red-50 border border-red-200 rounded"
+					>
+						<p className="text-red-600 text-sm">
+							Unsupported field type: {type}
+						</p>
+					</div>
+				);
+		}
+	};
+
+	return (
+		<div className="assessment-form space-y-4 p-4 border border-gray-200 rounded-lg bg-white">
+			<h3 className="text-lg font-semibold text-gray-900 mb-4">
+				Assessment Form
+			</h3>
+
+			{form.length === 0 ? (
+				<p className="text-gray-500 text-sm">No form fields configured.</p>
+			) : (
+				<div className="space-y-4">{form.map(renderFormField)}</div>
+			)}
+
+			{/* Form ID for debugging/tracking */}
+			{process.env.NODE_ENV === "development" && (
+				<div className="mt-6 pt-4 border-t border-gray-100">
+					<p className="text-xs text-gray-400">Form ID: {formId}</p>
+				</div>
+			)}
+		</div>
+	);
 };
 
 export const HtmlBlockRenderer = ({ data }: BlockPreviewProps<string>) => {

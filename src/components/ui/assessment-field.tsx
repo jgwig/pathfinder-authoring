@@ -85,7 +85,10 @@ export function AssessmentField({
 			)}
 			{field.options &&
 				field.options.map((option, i) => (
-					<div className="flex flex-col gap-2 border rounded-lg p-2 relative">
+					<div
+						key={i}
+						className="flex flex-col gap-2 border rounded-lg p-2 relative"
+					>
 						<Button
 							variant={"ghost"}
 							size={"icon"}
