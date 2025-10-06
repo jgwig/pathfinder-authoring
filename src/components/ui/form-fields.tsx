@@ -27,6 +27,7 @@ import {
 	SelectTrigger,
 	SelectValue,
 } from "./select";
+import { Checkbox } from "./checkbox";
 
 interface FormFieldProps {
 	label: string;
@@ -337,6 +338,82 @@ export const UrlField = ({
 				onChange={(e) => onChange(e.target.value)}
 				placeholder={placeholder || "https://example.com"}
 				aria-invalid={!!error}
+			/>
+		</FormField>
+	);
+};
+
+interface ButtonSelectFieldProps {
+	label: string;
+	value: string;
+	onChange: (value: string) => void;
+	options: { label: string; value: string }[];
+	required?: boolean;
+	error?: string;
+	className?: string;
+}
+
+export const ButtonSelectField = ({
+	label,
+	value,
+	onChange,
+	options,
+	required,
+	error,
+	className,
+}: ButtonSelectFieldProps) => {
+	return (
+		<FormField
+			label={label}
+			error={error}
+			required={required}
+			className={className}
+		>
+			<div className="flex flex-wrap gap-2">
+				{options.map((option) => (
+					<Button
+						key={option.value}
+						type="button"
+						variant={value === option.value ? "default" : "outline"}
+						size="sm"
+						onClick={() => onChange(option.value)}
+						className="transition-colors"
+					>
+						{option.label}
+					</Button>
+				))}
+			</div>
+		</FormField>
+	);
+};
+
+interface CheckboxFieldProps {
+	label: string;
+	checked: boolean;
+	onChange: (checked: boolean) => void;
+	required?: boolean;
+	error?: string;
+	className?: string;
+}
+
+export const CheckboxField = ({
+	label,
+	checked,
+	onChange,
+	required,
+	error,
+	className,
+}: CheckboxFieldProps) => {
+	return (
+		<FormField
+			label={label}
+			error={error}
+			required={required}
+			className={className}
+		>
+			<Checkbox
+				onCheckedChange={(value) => onChange(value as boolean)}
+				checked={checked}
 			/>
 		</FormField>
 	);

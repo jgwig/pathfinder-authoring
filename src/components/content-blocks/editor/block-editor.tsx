@@ -101,5 +101,5 @@ export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 		}
 	};
 
-	return <>{renderBlockEditor()}</>;
+	return renderBlockEditor();
 }
