@@ -163,7 +163,7 @@ export const ComponentBlockRenderer = ({
 export const RecommendationBlockRenderer = ({
 	data,
 }: BlockPreviewProps<RecommendationBlockData>) => {
-	const { services } = data;
+	const { services, test } = data;
 
 	const { loading, getServiceBySlug } = useServices();
 
@@ -176,7 +176,7 @@ export const RecommendationBlockRenderer = ({
 	return (
 		<div className="flex w-full flex-col md:flex-row gap-4 justify-center">
 			{services.map((service, i) => {
-				const serviceData = getServiceBySlug(service.slug);
+				const serviceData = test ? test : getServiceBySlug(service.slug);
 				if (serviceData) {
 					return (
 						<div

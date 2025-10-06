@@ -1,5 +1,7 @@
 // Types and classes for Pathfinder authoring content blocks
 
+import { Service } from "./service/service";
+
 export type ContentBlockType =
 	| "intro"
 	| "title"
@@ -106,6 +108,7 @@ export interface RecommendationBlockData {
 		slug: string;
 		config?: ServiceCardConfig;
 	}[];
+	test?: Service;
 }
 
 export type ExternalRecommendationData = {
