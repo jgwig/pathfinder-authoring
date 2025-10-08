@@ -6,8 +6,15 @@ import {
 } from "@/nodes/base-node";
 import { Handle, Node, NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
-import { StageNodeData } from "@/types/content";
 import { BlockPreview } from "@/components/content-blocks/preview/block-preview";
+import { ContentBlock } from "@/types/content";
+
+// Reusable type for React Flow node data representing a stage
+export type StageNodeData = {
+	blocks: ContentBlock<any>[];
+	title: string;
+	state?: Record<string, any>;
+};
 
 function StageNode({ id, data }: NodeProps<Node<StageNodeData>>) {
 	return (

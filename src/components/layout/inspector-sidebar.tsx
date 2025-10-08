@@ -35,7 +35,7 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 
 	// Initialise the component state when the node changes
 	useEffect(() => {
-		if (node) {
+		if (node && node.type === "stageNode") {
 			setBlocks(node.data.blocks);
 			setTitle(node.data.title);
 		}
@@ -133,7 +133,6 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 							<SortableContent className="flex flex-col gap-4">
 								{blocks &&
 									blocks.map((block, i) => {
-										// console.log(blocks);
 										return (
 											<SortableItem key={block.id} value={block.id}>
 												<div className="p-4 rounded-lg border flex flex-col ">
