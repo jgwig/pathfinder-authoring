@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import {
 	ReactFlow,
 	applyNodeChanges,
@@ -35,7 +35,7 @@ import {
 	SelectValue,
 } from "@/components/ui/select";
 import { useServices } from "@/providers/services/use-services";
-import { LoaderCircle, Target } from "lucide-react";
+import { LoaderCircle, Target, Copy, Clipboard } from "lucide-react";
 import criteriaNode from "@/nodes/criteria-node";
 import { CriteriaEdge, CriteriaEdgeData } from "@/edges/criteria-edge";
 
@@ -613,8 +613,12 @@ export default function Home() {
 	const [selectedNode, setSelectedNode] = useState<
 		Node<StageNodeData> | undefined
 	>(undefined);
+	const [copiedNode, setCopiedNode] = useState<Node<StageNodeData> | null>(
+		null
+	);
+	const reactFlowRef = useRef<HTMLDivElement>(null);
 
-	const { screenToFlowPosition, setViewport } = useReactFlow<
+	const { screenToFlowPosition, setViewport, getNodes } = useReactFlow<
 		Node<StageNodeData>,
 		Edge
 	>();
@@ -623,6 +627,96 @@ export default function Home() {
 		(params) => setEdges((eds) => addEdge(params, eds)),
 		[]
 	);
+
+	// Copy functionality - copy the selected node
+	const copyNode = useCallback(() => {
+		const selectedNodes = getNodes().filter((node) => node.selected);
+		if (selectedNodes.length === 1) {
+			setCopiedNode(selectedNodes[0]);
+		}
+	}, [getNodes]);
+
+	// Paste functionality - create a new node with unique ID and copied content
+	const pasteNode = useCallback(() => {
+		if (!copiedNode) return;
+
+		const newId = crypto.randomUUID();
+
+		// Deep clone the blocks to ensure complete separation from original
+		const clonedBlocks = copiedNode.data.blocks.map((block) => ({
+			...block,
+			id: crypto.randomUUID(), // Give each block a new unique ID
+			data: {
+				...block.data,
+				// Deep clone any nested objects in the data
+				...(block.data && typeof block.data === "object"
+					? JSON.parse(JSON.stringify(block.data))
+					: {}),
+			},
+		}));
+
+		// Deep clone the state to ensure complete separation
+		const clonedState = copiedNode.data.state
+			? JSON.parse(JSON.stringify(copiedNode.data.state))
+			: undefined;
+
+		const newNode: Node<StageNodeData> = {
+			...copiedNode,
+			id: newId,
+			position: {
+				x: copiedNode.position.x + 100, // Offset the new node position
+				y: copiedNode.position.y + 50,
+			},
+			data: {
+				...copiedNode.data,
+				blocks: clonedBlocks,
+				state: clonedState,
+				title: copiedNode.data.title + " (Copy)", // Indicate it's a copy
+			},
+			selected: true, // Select the new node
+		};
+
+		// Deselect all existing nodes and add the new one
+		setNodes((nds) => [
+			...nds.map((node) => ({ ...node, selected: false })),
+			newNode,
+		]);
+	}, [copiedNode, setNodes]);
+
+	// Keyboard event handler for copy/paste shortcuts
+	const handleKeyDown = useCallback(
+		(event: KeyboardEvent) => {
+			const isMac = navigator.platform.toUpperCase().indexOf("MAC") >= 0;
+			const metaKey = isMac ? event.metaKey : event.ctrlKey;
+
+			// Copy: Ctrl+C (Windows/Linux) or Cmd+C (Mac)
+			if (metaKey && event.key === "c" && !event.shiftKey && !event.altKey) {
+				event.preventDefault();
+				copyNode();
+			}
+
+			// Paste: Ctrl+V (Windows/Linux) or Cmd+V (Mac)
+			if (metaKey && event.key === "v" && !event.shiftKey && !event.altKey) {
+				event.preventDefault();
+				pasteNode();
+			}
+		},
+		[copyNode, pasteNode]
+	);
+
+	// Add keyboard event listener
+	useEffect(() => {
+		const element = reactFlowRef.current;
+		if (element) {
+			element.addEventListener("keydown", handleKeyDown);
+			// Make sure the element can receive focus
+			element.setAttribute("tabindex", "0");
+
+			return () => {
+				element.removeEventListener("keydown", handleKeyDown);
+			};
+		}
+	}, [handleKeyDown]);
 
 	const onSave = useCallback(() => {
 		if (rfInstance) {
@@ -715,7 +809,7 @@ export default function Home() {
 
 	return (
 		<div className="flex flex-row min-h-screen w-full">
-			<div style={{ width: "100%", height: "100%" }}>
+			<div style={{ width: "100%", height: "100%" }} ref={reactFlowRef}>
 				<ReactFlow
 					nodes={nodes}
 					edges={edges}
@@ -743,6 +837,24 @@ export default function Home() {
 					<Background />
 					<DevTools position="top-left" />
 					<Panel position="top-right" className="flex flex-row gap-2">
+						<Button
+							variant={"outline"}
+							onClick={copyNode}
+							disabled={!selectedNode}
+							className="flex items-center gap-1"
+						>
+							<Copy className="w-4 h-4" />
+							Copy
+						</Button>
+						<Button
+							variant={"outline"}
+							onClick={pasteNode}
+							disabled={!copiedNode}
+							className="flex items-center gap-1"
+						>
+							<Clipboard className="w-4 h-4" />
+							Paste
+						</Button>
 						<Button variant={"outline"} onClick={() => onSave()}>
 							Save
 						</Button>

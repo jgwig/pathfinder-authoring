@@ -453,7 +453,6 @@ export const AssessmentBlockRenderer = ({
 	};
 
 	const removeFormField = (id: string) => {
-		console.log("being called");
 		handleFieldsChange(data.form.filter((field) => field.id !== id));
 	};
 
