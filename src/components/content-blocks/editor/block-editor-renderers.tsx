@@ -38,6 +38,7 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { AssessmentField } from "@/components/ui/assessment-field";
+import { FormFieldEditorModal } from "@/components/form-editor/form-field-editor-modal";
 
 interface BlockRendererProps<T> {
 	data: T;
@@ -464,6 +465,8 @@ export const AssessmentBlockRenderer = ({
 		handleFieldsChange(updatedForm);
 	};
 
+	const [isFormEditorOpen, setIsFormEditorOpen] = useState(false);
+
 	const formItemOptions: { label: string; value: FormItemType }[] = [
 		{
 			label: "Button Select",
@@ -480,45 +483,54 @@ export const AssessmentBlockRenderer = ({
 	];
 
 	return (
-		<div className="space-y-4">
-			<TextField
-				label="Form ID"
-				value={data.formId || ""}
-				onChange={(value) => handleChange("formId", value)}
-				placeholder="unique-form-id"
-				required
+		<>
+			<div className="space-y-4">
+				<TextField
+					label="Form ID"
+					value={data.formId || ""}
+					onChange={(value) => handleChange("formId", value)}
+					placeholder="unique-form-id"
+					required
+				/>
+				<Button variant={"outline"} onClick={() => setIsFormEditorOpen(true)}>
+					Configure
+				</Button>
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="outline" className=" w-full">
+							Add Field
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent>
+						{formItemOptions.map((option) => (
+							<DropdownMenuItem
+								key={option.value}
+								onClick={() => addFormField(option.value as FormItemType)}
+							>
+								{option.label}
+							</DropdownMenuItem>
+						))}
+					</DropdownMenuContent>
+				</DropdownMenu>
+				{data.form.map((field) => {
+					return (
+						<div key={field.id} className="p-4 border rounded-lg">
+							<AssessmentField
+								field={field}
+								removeField={removeFormField}
+								onChange={(updatedField) =>
+									updateFormField(field.id, updatedField)
+								}
+							/>
+						</div>
+					);
+				})}
+			</div>
+			<FormFieldEditorModal
+				open={isFormEditorOpen}
+				onOpenChange={setIsFormEditorOpen}
 			/>
-			<DropdownMenu>
-				<DropdownMenuTrigger asChild>
-					<Button variant="outline" className=" w-full">
-						Add Field
-					</Button>
-				</DropdownMenuTrigger>
-				<DropdownMenuContent>
-					{formItemOptions.map((option) => (
-						<DropdownMenuItem
-							key={option.value}
-							onClick={() => addFormField(option.value as FormItemType)}
-						>
-							{option.label}
-						</DropdownMenuItem>
-					))}
-				</DropdownMenuContent>
-			</DropdownMenu>
-			{data.form.map((field) => {
-				return (
-					<div key={field.id} className="p-4 border rounded-lg">
-						<AssessmentField
-							field={field}
-							removeField={removeFormField}
-							onChange={(updatedField) =>
-								updateFormField(field.id, updatedField)
-							}
-						/>
-					</div>
-				);
-			})}
-		</div>
+		</>
 	);
 };
 
