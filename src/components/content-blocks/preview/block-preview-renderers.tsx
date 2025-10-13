@@ -30,6 +30,7 @@ import {
 import type { FormItem } from "@/types/content";
 
 import "./styles.css";
+import { useReactFlow, useNodeId } from "@xyflow/react";
 
 interface BlockPreviewProps<T> {
 	data: T;
@@ -39,7 +40,6 @@ export const TitleBlockRenderer = ({
 	data,
 }: BlockPreviewProps<TitleBlockData>) => {
 	const { level, text } = data;
-	console.log(typeof level);
 
 	const parsedLevel = typeof level === "string" ? parseInt(level) : 1;
 
@@ -243,6 +243,9 @@ export const AssessmentBlockRenderer = ({
 }: BlockPreviewProps<AssessmentBlockData>) => {
 	const { formId, form } = data;
 
+	const nodeId = useNodeId(); // Gets the ID of the StageNode containing this component
+	const { updateNodeData } = useReactFlow();
+
 	// State to manage form values
 	const [formValues, setFormValues] = useState<
 		Record<string, string | boolean | undefined>
@@ -253,30 +256,37 @@ export const AssessmentBlockRenderer = ({
 		const initialValues: Record<string, string | boolean | undefined> = {};
 		form.forEach((field) => {
 			if (field.type === "checkbox") {
-				initialValues[field.id] = false;
+				initialValues[field.name] = false;
 			} else {
 				// Use empty string for select fields, but we'll handle it specially
-				initialValues[field.id] = "";
+				initialValues[field.name] = "";
 			}
 		});
 		setFormValues(initialValues);
 	}, [form]);
 
 	// Handle form field changes
-	const handleFieldChange = (fieldId: string, value: string | boolean) => {
+	const handleFieldChange = (fieldName: string, value: string | boolean) => {
 		setFormValues((prev) => ({
 			...prev,
-			[fieldId]: value,
+			[fieldName]: value,
 		}));
 	};
 
 	useEffect(() => {
-		console.log(formValues);
-	}, [formValues]);
+		// Update the node's data with the current form values
+		if (nodeId) {
+			updateNodeData(nodeId, {
+				state: {
+					[formId]: formValues,
+				},
+			});
+		}
+	}, [nodeId, formValues, formId, updateNodeData]);
 
 	// Render individual form field based on type
 	const renderFormField = (field: FormItem) => {
-		const { id, type, label, options = [] } = field;
+		const { id, type, label, options = [], name } = field;
 
 		switch (type) {
 			case "buttonSelect":
@@ -284,8 +294,8 @@ export const AssessmentBlockRenderer = ({
 					<ButtonSelectField
 						key={id}
 						label={label}
-						value={(formValues[id] as string) || ""}
-						onChange={(value) => handleFieldChange(id, value)}
+						value={(formValues[name] as string) || ""}
+						onChange={(value) => handleFieldChange(name, value)}
 						options={options.map((option) => ({
 							label: option,
 							value: option,
@@ -299,8 +309,8 @@ export const AssessmentBlockRenderer = ({
 					<SelectField
 						key={id}
 						label={label}
-						value={formValues[id] as string | ""}
-						onChange={(value) => handleFieldChange(id, value)}
+						value={formValues[name] as string | ""}
+						onChange={(value) => handleFieldChange(name, value)}
 						options={options.map((option) => {
 							if (option !== "") {
 								return {
@@ -323,8 +333,8 @@ export const AssessmentBlockRenderer = ({
 					<CheckboxField
 						key={id}
 						label={label}
-						checked={(formValues[id] as boolean) || false}
-						onChange={(checked) => handleFieldChange(id, checked)}
+						checked={(formValues[name] as boolean) || false}
+						onChange={(checked) => handleFieldChange(name, checked)}
 						className="mb-4"
 					/>
 				);

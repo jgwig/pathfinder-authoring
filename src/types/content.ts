@@ -160,12 +160,6 @@ export type Stage = {
 	edges: { id: string; source: string; target: string }[];
 };
 
-// Reusable type for React Flow node data representing a stage
-export type StageNodeData = {
-	blocks: ContentBlock<any>[];
-	title: string;
-};
-
 export const contentBlockOptions: Record<ContentBlockType, string> = {
 	intro: "Intro",
 	title: "Title",

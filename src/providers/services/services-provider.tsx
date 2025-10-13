@@ -26,7 +26,6 @@ export const ServicesProvider = ({ children }: { children: ReactNode }) => {
 				(serverModel: ServiceServerModel) =>
 					Service.fromServiceServerModel(new ServiceServerModel(serverModel))
 			);
-			console.log(services);
 			setServices(services);
 			setLoading(false);
 		};
