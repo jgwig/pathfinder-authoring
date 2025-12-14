@@ -23,7 +23,7 @@ import {
 	CheckboxField,
 } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { clinicalComponentsTypes } from "@/components/clinical/clinical-component-registry";
 import { getServices } from "@/actions/actions";
 import { Database, LoaderCircle } from "lucide-react";
@@ -229,10 +229,14 @@ export const RecommendationBlockRenderer = ({
 	onChange,
 }: BlockRendererProps<RecommendationBlockData>) => {
 	const { loading, council, services } = useServices();
+	const previousCouncilRef = React.useRef<string>();
 
 	useEffect(() => {
-		// Remove all services when council changes (because they won't exist in that council)
-		handleServicesChange([]);
+		// Only clear services when council actually changes (not on initial mount)
+		if (previousCouncilRef.current && previousCouncilRef.current !== council) {
+			handleServicesChange([]);
+		}
+		previousCouncilRef.current = council;
 	}, [council]);
 
 	const handleServicesChange = (services: typeof data.services) => {

@@ -32,9 +32,16 @@ function StageNode({ id, data }: NodeProps<Node<StageNodeData>>) {
 					</div>
 				)}
 				{data.blocks &&
-					data.blocks.map((block, i) => {
-						return <BlockPreview block={block} key={block.id} />;
-					})}
+					data.blocks
+						.filter(
+							(block): block is ContentBlock<any> =>
+								block !== null && block !== undefined
+						)
+						.map((block, i) => {
+							return (
+								<BlockPreview block={block} key={block.id ?? `block-${i}`} />
+							);
+						})}
 			</BaseNodeContent>
 			{id === "s1" ? (
 				<Handle

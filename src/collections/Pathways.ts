@@ -2,6 +2,10 @@ import type { CollectionConfig } from "payload";
 
 export const Pathways: CollectionConfig = {
 	slug: "pathways",
+	// Enable versioning to track changes over time
+	versions: {
+		maxPerDoc: 50, // Keep last 50 versions per pathway
+	},
 	fields: [
 		{
 			type: "text",
