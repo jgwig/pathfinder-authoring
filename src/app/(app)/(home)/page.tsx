@@ -38,6 +38,9 @@ import { useServices } from "@/providers/services/use-services";
 import { LoaderCircle, Target } from "lucide-react";
 import criteriaNode from "@/nodes/criteria-node";
 import { CriteriaEdge, CriteriaEdgeData } from "@/edges/criteria-edge";
+import { redirect } from "next/navigation";
+import { useAuth } from "@/providers/auth/use-auth";
+import { usePathway } from "@/providers/pathway/use-pathway";
 
 const nodeTypes = {
 	stageNode: StageNode,
@@ -603,6 +606,13 @@ const initialEdges: Edge<CriteriaEdgeData>[] = [
 // ...existing code...
 
 export default function Home() {
+	const { user } = useAuth();
+	const { pathway, savePathway } = usePathway();
+
+	if (!user) {
+		redirect("login");
+	}
+
 	const [nodes, setNodes, onNodesChange] =
 		useNodesState<Node<StageNodeData>>(initialNodes);
 	const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>(initialEdges);
@@ -624,10 +634,14 @@ export default function Home() {
 		[]
 	);
 
-	const onSave = useCallback(() => {
+	const onSave = useCallback(async () => {
 		if (rfInstance) {
 			const flow = rfInstance.toObject();
 			localStorage.setItem(FLOW_KEY, JSON.stringify(flow));
+			if (pathway) {
+				console.log("saving pathfinder");
+				await savePathway(user, pathway.id, flow);
+			}
 		}
 	}, [rfInstance]);
 
