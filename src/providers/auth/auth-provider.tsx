@@ -7,11 +7,13 @@ import { AuthContext } from "./auth-context";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
 	const [user, setUser] = useState<User | undefined>(undefined);
+	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const isAuthenticated = async () => {
 			const response = await authenticate();
 			setUser(response);
+			setIsLoading(false);
 		};
 		isAuthenticated();
 	}, []);
@@ -32,5 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 		return undefined;
 	}
 
-	return <AuthContext value={{ user, login, logout }}>{children}</AuthContext>;
+	return (
+		<AuthContext value={{ user, isLoading, login, logout }}>
+			{children}
+		</AuthContext>
+	);
 };

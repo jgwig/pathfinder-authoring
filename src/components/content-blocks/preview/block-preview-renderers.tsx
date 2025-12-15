@@ -244,18 +244,26 @@ export const AssessmentBlockRenderer = ({
 	const { formId, form } = data;
 
 	const nodeId = useNodeId(); // Gets the ID of the StageNode containing this component
-	const { updateNodeData } = useReactFlow();
+	const { updateNodeData, getNode } = useReactFlow();
 
 	// State to manage form values
 	const [formValues, setFormValues] = useState<
 		Record<string, string | boolean | undefined>
 	>({});
 
-	// Initialize form values
+	// Initialize form values from existing node state or defaults
 	useEffect(() => {
+		// Get the current node data
+		const node = nodeId ? getNode(nodeId) : null;
+		const existingState = node?.data?.state as Record<string, any> | undefined;
+		const formState = existingState?.[formId];
+
 		const initialValues: Record<string, string | boolean | undefined> = {};
 		form.forEach((field) => {
-			if (field.type === "checkbox") {
+			// Use existing state value if available, otherwise use defaults
+			if (formState && field.name in formState) {
+				initialValues[field.name] = formState[field.name];
+			} else if (field.type === "checkbox") {
 				initialValues[field.name] = false;
 			} else {
 				// Use empty string for select fields, but we'll handle it specially
@@ -263,7 +271,7 @@ export const AssessmentBlockRenderer = ({
 			}
 		});
 		setFormValues(initialValues);
-	}, [form]);
+	}, [form, formId, nodeId, getNode]);
 
 	// Handle form field changes
 	const handleFieldChange = (fieldName: string, value: string | boolean) => {
@@ -275,14 +283,19 @@ export const AssessmentBlockRenderer = ({
 
 	useEffect(() => {
 		// Update the node's data with the current form values
+		// Preserve existing state for other forms
 		if (nodeId) {
+			const node = getNode(nodeId);
+			const existingState = (node?.data?.state as Record<string, any>) || {};
+			
 			updateNodeData(nodeId, {
 				state: {
+					...existingState,
 					[formId]: formValues,
 				},
 			});
 		}
-	}, [nodeId, formValues, formId, updateNodeData]);
+	}, [nodeId, formValues, formId, updateNodeData, getNode]);
 
 	// Render individual form field based on type
 	const renderFormField = (field: FormItem) => {

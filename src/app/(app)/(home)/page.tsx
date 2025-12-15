@@ -6,7 +6,15 @@ import { useAuth } from "@/providers/auth/use-auth";
 import { ReactFlowLayout } from "@/components/react-flow/ReactFlowLayout";
 
 export default function Home() {
-	const { user } = useAuth();
+	const { user, isLoading } = useAuth();
+
+	if (isLoading) {
+		return (
+			<div className="flex min-h-screen w-full items-center justify-center">
+				<div className="text-muted-foreground">Loading...</div>
+			</div>
+		);
+	}
 
 	if (!user) {
 		redirect("login");

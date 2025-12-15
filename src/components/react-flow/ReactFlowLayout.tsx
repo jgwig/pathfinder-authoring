@@ -74,6 +74,7 @@ export function ReactFlowLayout() {
 	const [selectedNode, setSelectedNode] = useState<
 		Node<StageNodeData> | undefined
 	>(undefined);
+	const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
 
 	// Track if we've synced with the flow prop to avoid re-syncing
 	const lastFlowRef = useRef<PathwayFlowData | undefined>(undefined);
@@ -113,11 +114,13 @@ export function ReactFlowLayout() {
 	 */
 	useEffect(() => {
 		// Don't auto-save if:
+		// - Auto-save is disabled
 		// - No pathway selected
 		// - No ReactFlow instance
 		// - Currently syncing from context (not a local change)
 		// - Currently previewing a version
 		if (
+			!autoSaveEnabled ||
 			!pathway ||
 			!rfInstance ||
 			!isLocalChangeRef.current ||
@@ -148,7 +151,15 @@ export function ReactFlowLayout() {
 				clearTimeout(autoSaveTimerRef.current);
 			}
 		};
-	}, [nodes, edges, pathway, rfInstance, autoSave]);
+	}, [
+		nodes,
+		edges,
+		pathway,
+		rfInstance,
+		autoSave,
+		autoSaveEnabled,
+		isPreviewingVersion,
+	]);
 
 	/**
 	 * Wrap onNodesChange to track local changes
