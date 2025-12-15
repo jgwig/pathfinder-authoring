@@ -287,7 +287,7 @@ export const AssessmentBlockRenderer = ({
 		if (nodeId) {
 			const node = getNode(nodeId);
 			const existingState = (node?.data?.state as Record<string, any>) || {};
-			
+
 			updateNodeData(nodeId, {
 				state: {
 					...existingState,
