@@ -10,6 +10,7 @@ import {
 	DropdownBlockData,
 	AssessmentResultData,
 	IntroBlockData,
+	ServiceCardConfig,
 	FormItemType,
 	FormItem,
 } from "@/types/content";
@@ -19,17 +20,11 @@ import {
 	SelectField,
 	UrlField,
 	ComboboxField,
-	ButtonSelectField,
-	CheckboxField,
 } from "@/components/ui/form-fields";
 import { Button } from "@/components/ui/button";
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { clinicalComponentsTypes } from "@/components/clinical/clinical-component-registry";
-import { getServices } from "@/actions/actions";
-import { Database, LoaderCircle } from "lucide-react";
-import { Service } from "@/types/service/service";
-import { ServiceServerModel } from "@/types/service/server/serviceServerModel";
-import { ServiceListServerModel } from "@/types/service/server/serviceListServerModel";
+import { LoaderCircle } from "lucide-react";
 import { useServices } from "@/providers/services/use-services";
 import {
 	DropdownMenu,
@@ -49,7 +44,10 @@ export const TitleBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<TitleBlockData>) => {
-	const handleChange = (field: keyof TitleBlockData, value: any) => {
+	const handleChange = <K extends keyof TitleBlockData>(
+		field: K,
+		value: TitleBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -74,7 +72,9 @@ export const TitleBlockRenderer = ({
 			<SelectField
 				label="Heading Level"
 				value={data.level.toString() || "1"}
-				onChange={(value) => handleChange("level", value)}
+				onChange={(value) =>
+					handleChange("level", Number(value) as TitleBlockData["level"])
+				}
 				options={headingOptions}
 				required
 			/>
@@ -89,7 +89,10 @@ export const ParagraphBlockRenderer = ({
 }: BlockRendererProps<ParagraphBlockData>) => {
 	const [useHtml, setUseHtml] = useState(!!data.html);
 
-	const handleChange = (field: keyof ParagraphBlockData, value: any) => {
+	const handleChange = <K extends keyof ParagraphBlockData>(
+		field: K,
+		value: ParagraphBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -139,7 +142,10 @@ export const VideoBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<VideoBlockData>) => {
-	const handleChange = (field: keyof VideoBlockData, value: any) => {
+	const handleChange = <K extends keyof VideoBlockData>(
+		field: K,
+		value: VideoBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -166,7 +172,10 @@ export const ImageBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<ImageBlockData>) => {
-	const handleChange = (field: keyof ImageBlockData, value: any) => {
+	const handleChange = <K extends keyof ImageBlockData>(
+		field: K,
+		value: ImageBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -200,7 +209,10 @@ export const ComponentBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<ComponentBlockData>) => {
-	const handleChange = (field: keyof ComponentBlockData, value: any) => {
+	const handleChange = <K extends keyof ComponentBlockData>(
+		field: K,
+		value: ComponentBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -229,7 +241,13 @@ export const RecommendationBlockRenderer = ({
 	onChange,
 }: BlockRendererProps<RecommendationBlockData>) => {
 	const { loading, council, services } = useServices();
-	const previousCouncilRef = React.useRef<string>();
+	const previousCouncilRef = React.useRef<string | undefined>(undefined);
+	const handleServicesChange = useCallback(
+		(services: typeof data.services) => {
+			onChange({ ...data, services });
+		},
+		[data, onChange]
+	);
 
 	useEffect(() => {
 		// Only clear services when council actually changes (not on initial mount)
@@ -237,11 +255,7 @@ export const RecommendationBlockRenderer = ({
 			handleServicesChange([]);
 		}
 		previousCouncilRef.current = council;
-	}, [council]);
-
-	const handleServicesChange = (services: typeof data.services) => {
-		onChange({ ...data, services });
-	};
+	}, [council, handleServicesChange]);
 
 	const addService = () => {
 		handleServicesChange([
@@ -254,23 +268,42 @@ export const RecommendationBlockRenderer = ({
 		handleServicesChange(data.services.filter((_, i) => i !== index));
 	};
 
-	const updateService = (index: number, field: string, value: any) => {
-		const updatedServices = [...data.services];
-		if (field === "type") {
-			updatedServices[index] = {
-				...updatedServices[index],
-				config: {
-					...updatedServices[index].config,
-					type: value,
-				},
-			};
-		} else {
-			updatedServices[index] = { ...updatedServices[index], [field]: value };
-		}
-		handleServicesChange(updatedServices);
+	const updateServiceSlug = (index: number, slug: string) => {
+		handleServicesChange(
+			data.services.map((service, i) =>
+				i === index
+					? {
+							...service,
+							slug,
+					  }
+					: service
+			)
+		);
 	};
 
-	const cardTypeOptions = [
+	const updateServiceType = (
+		index: number,
+		type: ServiceCardConfig["type"]
+	) => {
+		handleServicesChange(
+			data.services.map((service, i) =>
+				i === index
+					? {
+							...service,
+							config: {
+								...service.config,
+								type,
+							},
+					  }
+					: service
+			)
+		);
+	};
+
+	const cardTypeOptions: {
+		label: string;
+		value: NonNullable<ServiceCardConfig["type"]>;
+	}[] = [
 		{
 			label: "Micro",
 			value: "micro",
@@ -326,7 +359,7 @@ export const RecommendationBlockRenderer = ({
 							<ComboboxField
 								label="Select Service"
 								value={service.slug}
-								onChange={(value) => updateService(index, "slug", value)}
+								onChange={(value) => updateServiceSlug(index, value)}
 								options={
 									services?.map((service) => ({
 										label: service.title,
@@ -341,7 +374,9 @@ export const RecommendationBlockRenderer = ({
 								label="Card Type"
 								options={cardTypeOptions}
 								value={service.config?.type || "medium"}
-								onChange={(value) => updateService(index, "type", value)}
+								onChange={(value) =>
+									updateServiceType(index, value as ServiceCardConfig["type"])
+								}
 							/>
 						</div>
 					))}
@@ -370,7 +405,13 @@ export const ExternalRecommendationRenderer = ({
 		handleServicesChange(data.services.filter((_, i) => i !== index));
 	};
 
-	const updateService = (index: number, field: string, value: any) => {
+	const updateService = <
+		K extends keyof ExternalRecommendationData["services"][number]
+	>(
+		index: number,
+		field: K,
+		value: ExternalRecommendationData["services"][number][K]
+	) => {
 		const updatedServices = [...data.services];
 		updatedServices[index] = { ...updatedServices[index], [field]: value };
 		handleServicesChange(updatedServices);
@@ -442,7 +483,10 @@ export const AssessmentBlockRenderer = ({
 	data,
 	onChange,
 }: BlockRendererProps<AssessmentBlockData>) => {
-	const handleChange = (field: keyof AssessmentBlockData, value: any) => {
+	const handleChange = <K extends keyof AssessmentBlockData>(
+		field: K,
+		value: AssessmentBlockData[K]
+	) => {
 		onChange({ ...data, [field]: value });
 	};
 
@@ -558,9 +602,11 @@ export const HtmlBlockRenderer = ({
 
 // Simplified renderers for complex nested types
 export const IntroBlockRenderer = ({
-	data,
-	onChange,
+	data: _data,
+	onChange: _onChange,
 }: BlockRendererProps<IntroBlockData>) => {
+	void _data;
+	void _onChange;
 	return (
 		<div className="p-4 bg-muted rounded-lg">
 			<p className="text-sm text-muted-foreground">
@@ -572,9 +618,11 @@ export const IntroBlockRenderer = ({
 };
 
 export const DropdownBlockRenderer = ({
-	data,
-	onChange,
+	data: _data,
+	onChange: _onChange,
 }: BlockRendererProps<DropdownBlockData>) => {
+	void _data;
+	void _onChange;
 	return (
 		<div className="p-4 bg-muted rounded-lg">
 			<p className="text-sm text-muted-foreground">
@@ -586,9 +634,11 @@ export const DropdownBlockRenderer = ({
 };
 
 export const AssessmentResultRenderer = ({
-	data,
-	onChange,
+	data: _data,
+	onChange: _onChange,
 }: BlockRendererProps<AssessmentResultData>) => {
+	void _data;
+	void _onChange;
 	return (
 		<div className="p-4 bg-muted rounded-lg">
 			<p className="text-sm text-muted-foreground">

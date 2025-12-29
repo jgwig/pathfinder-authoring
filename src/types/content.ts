@@ -126,7 +126,7 @@ export type ComponentBlockData = {
 
 export interface DropdownBlockData {
 	title: TitleBlockData;
-	content: ContentBlock<any>[];
+	content: ContentBlock<AnyBlockData>[];
 }
 
 export interface AssessmentBlockData {

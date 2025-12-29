@@ -1,4 +1,4 @@
-import { StageNodeData } from "@/nodes/stage-node";
+import { StageNodeData } from "@/types/flow/nodes";
 import {
 	ConditionGroup,
 	Condition,
@@ -10,14 +10,11 @@ import {
 	Edge,
 	EdgeLabelRenderer,
 	EdgeProps,
-	getBezierPath,
 	getSimpleBezierPath,
-	getSmoothStepPath,
-	getStraightPath,
 	useReactFlow,
 	useNodesData,
 } from "@xyflow/react";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -58,14 +55,15 @@ export function CriteriaEdge({
 	const [editedCriteria, setEditedCriteria] = useState<
 		ConditionGroup | undefined
 	>(data?.criteria);
-	const { getNode, setEdges } = useReactFlow();
+	const { setEdges } = useReactFlow();
 
 	// Subscribe to source node data changes - this will re-render when data changes
 	const sourceNodeData = useNodesData(source);
 	const sourceNodeState = (sourceNodeData?.data as StageNodeData)?.state;
 
 	// Get the target node data (if needed) - also reactive
-	const targetNodeData = useNodesData(target);
+	// Target node data can be added later if edge-level validation requires it
+	useNodesData(target);
 
 	const [edgePath, labelX, labelY] = getSimpleBezierPath(props);
 
@@ -76,7 +74,7 @@ export function CriteriaEdge({
 		setEditedCriteria(data?.criteria);
 	}, [data?.criteria]);
 
-	const validate = (): boolean => {
+	const validate = useCallback((): boolean => {
 		if (!criteria) return true;
 		if (!sourceNodeData?.data) return false;
 		if (!sourceNodeState) return false;
@@ -86,11 +84,11 @@ export function CriteriaEdge({
 			sourceNodeState
 		);
 		return validateResult;
-	};
+	}, [criteria, sourceNodeData?.data, sourceNodeState]);
 
 	useEffect(() => {
 		setValid(validate());
-	}, [sourceNodeState, criteria]);
+	}, [sourceNodeState, criteria, validate]);
 
 	const updateCriteria = () => {
 		setEdges((edges) =>
@@ -144,7 +142,7 @@ export function CriteriaEdge({
 	const updateCondition = (
 		index: number,
 		field: keyof Condition,
-		value: any
+		value: Condition[keyof Condition]
 	) => {
 		setEditedCriteria((prev) => {
 			if (!prev) return prev;
@@ -279,7 +277,12 @@ export function CriteriaEdge({
 														</Select>
 														<Input
 															placeholder="Value"
-															value={condition.value}
+															value={
+																condition.value === null ||
+																condition.value === undefined
+																	? ""
+																	: String(condition.value)
+															}
 															onChange={(e) => {
 																const val = e.target.value;
 																// Try to parse as number if possible

@@ -1,13 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { useState, useRef, useEffect } from "react";
-import { Check, ChevronDownIcon, ChevronsUpDown, XIcon } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDownIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { Button } from "./button";
 import {
@@ -247,7 +241,11 @@ export const ComboboxField = ({
 	noOptionsMessage = "No options found",
 }: ComboboxFieldProps) => {
 	const [open, setOpen] = useState(false);
-	const [comboValue, setComboValue] = useState("");
+	const [comboValue, setComboValue] = useState(value);
+
+	useEffect(() => {
+		setComboValue(value);
+	}, [value]);
 	return (
 		<FormField
 			label={label}

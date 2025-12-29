@@ -4,19 +4,12 @@ import {
 	BaseNodeHeader,
 	BaseNodeHeaderTitle,
 } from "@/nodes/base-node";
-import { Handle, Node, NodeProps, Position } from "@xyflow/react";
+import { Handle, NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
 import { BlockPreview } from "@/components/content-blocks/preview/block-preview";
-import { ContentBlock } from "@/types/content";
+import { StageNodeData } from "@/types/flow/nodes";
 
-// Reusable type for React Flow node data representing a stage
-export type StageNodeData = {
-	blocks: ContentBlock<any>[];
-	title: string;
-	state?: Record<string, any>;
-};
-
-function StageNode({ id, data }: NodeProps<Node<StageNodeData>>) {
+function StageNode({ id, data }: NodeProps<StageNodeData>) {
 	return (
 		<BaseNode className={`w-[768px]`}>
 			<BaseNodeHeader className="border-b">
@@ -33,10 +26,7 @@ function StageNode({ id, data }: NodeProps<Node<StageNodeData>>) {
 				)}
 				{data.blocks &&
 					data.blocks
-						.filter(
-							(block): block is ContentBlock<any> =>
-								block !== null && block !== undefined
-						)
+						.filter((block) => block != null)
 						.map((block, i) => {
 							return (
 								<BlockPreview block={block} key={block.id ?? `block-${i}`} />

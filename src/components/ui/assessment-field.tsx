@@ -48,7 +48,10 @@ export function AssessmentField({
 		handleUpdateField("options", updatedOptions);
 	};
 
-	const handleUpdateField = (key: string, value: any) => {
+	const handleUpdateField = <K extends keyof FormItem>(
+		key: K,
+		value: FormItem[K]
+	) => {
 		const updatedField = { ...field, [key]: value };
 		onChange(updatedField);
 	};

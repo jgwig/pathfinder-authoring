@@ -1,5 +1,4 @@
-import { NodeProps, Handle, Position, Node } from "@xyflow/react";
-import { get } from "lodash"; // Safe way to access nested properties
+import { NodeProps, Handle, Position } from "@xyflow/react";
 import { memo } from "react";
 import {
 	BaseNode,
@@ -7,11 +6,9 @@ import {
 	BaseNodeHeader,
 	BaseNodeHeaderTitle,
 } from "@/nodes/base-node";
-import { ConditionGroup } from "@/utils/criteria/evaluate";
+import { CriteriaNodeData } from "@/types/flow/nodes";
 
-export type CriteriaNodeData = Record<string, any>;
-
-function CriteriaNode(props: NodeProps<Node<CriteriaNodeData>>) {
+function CriteriaNode(props: NodeProps<CriteriaNodeData>) {
 	const { data } = props;
 
 	return (

@@ -1,4 +1,18 @@
-import { AnyBlockData, ContentBlock } from "@/types/content";
+import {
+	AnyBlockData,
+	AssessmentBlockData,
+	AssessmentResultData,
+	ComponentBlockData,
+	DropdownBlockData,
+	ExternalRecommendationData,
+	ImageBlockData,
+	IntroBlockData,
+	ParagraphBlockData,
+	RecommendationBlockData,
+	TitleBlockData,
+	VideoBlockData,
+} from "@/types/content";
+import { ContentBlock } from "@/types/content";
 import {
 	AssessmentBlockRenderer,
 	AssessmentResultRenderer,
@@ -15,13 +29,13 @@ import {
 } from "./block-editor-renderers";
 
 interface BlockEditorProps {
-	handleUpdateBlock: (data: ContentBlock<any>) => void;
-	block: ContentBlock<any>;
+	handleUpdateBlock: (data: ContentBlock<AnyBlockData>) => void;
+	block: ContentBlock<AnyBlockData>;
 }
 
 export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 	function handleChange(data: AnyBlockData) {
-		const updatedBlock: ContentBlock<any> = {
+		const updatedBlock: ContentBlock<AnyBlockData> = {
 			id: block.id,
 			type: block.type,
 			data: data,
@@ -35,41 +49,59 @@ export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 		switch (block.type) {
 			case "title":
 				return (
-					<TitleBlockRenderer data={data as any} onChange={handleChange} />
+					<TitleBlockRenderer
+						data={data as TitleBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "paragraph":
 				return (
-					<ParagraphBlockRenderer data={data as any} onChange={handleChange} />
+					<ParagraphBlockRenderer
+						data={data as ParagraphBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "video":
 				return (
-					<VideoBlockRenderer data={data as any} onChange={handleChange} />
+					<VideoBlockRenderer
+						data={data as VideoBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "image":
 				return (
-					<ImageBlockRenderer data={data as any} onChange={handleChange} />
+					<ImageBlockRenderer
+						data={data as ImageBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "component":
 				return (
-					<ComponentBlockRenderer data={data as any} onChange={handleChange} />
+					<ComponentBlockRenderer
+						data={data as ComponentBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "recommendation":
 				return (
 					<RecommendationBlockRenderer
-						data={data as any}
+						data={data as RecommendationBlockData}
 						onChange={handleChange}
 					/>
 				);
 			case "externalRecommendation":
 				return (
 					<ExternalRecommendationRenderer
-						data={data as any}
+						data={data as ExternalRecommendationData}
 						onChange={handleChange}
 					/>
 				);
 			case "assessment":
 				return (
-					<AssessmentBlockRenderer data={data as any} onChange={handleChange} />
+					<AssessmentBlockRenderer
+						data={data as AssessmentBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "html":
 				return (
@@ -77,16 +109,22 @@ export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 				);
 			case "intro":
 				return (
-					<IntroBlockRenderer data={data as any} onChange={handleChange} />
+					<IntroBlockRenderer
+						data={data as IntroBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "dropdown":
 				return (
-					<DropdownBlockRenderer data={data as any} onChange={handleChange} />
+					<DropdownBlockRenderer
+						data={data as DropdownBlockData}
+						onChange={handleChange}
+					/>
 				);
 			case "assessmentResult":
 				return (
 					<AssessmentResultRenderer
-						data={data as any}
+						data={data as AssessmentResultData}
 						onChange={handleChange}
 					/>
 				);

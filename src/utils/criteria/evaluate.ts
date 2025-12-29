@@ -1,6 +1,6 @@
 import { get } from "lodash"; // Safe way to access nested properties
 
-const validOperators = [
+export const VALID_OPERATORS = [
 	"equals",
 	"not_equals",
 	"greater_than",
@@ -11,10 +11,14 @@ const validOperators = [
 	"not_in",
 	"matches_regex",
 	"not_matches_regex",
-];
+] as const;
 
 // Creates a type of the above valid operators
-export type Operator = (typeof validOperators)[number];
+export type Operator = (typeof VALID_OPERATORS)[number];
+
+export type CriteriaPrimitive = string | number | boolean | null;
+export type CriteriaValue = CriteriaPrimitive | CriteriaPrimitive[] | RegExp;
+export type CriteriaData = Record<string, unknown>;
 
 // Groups multiple Conditions with 'and' / 'or' logical operators
 export interface ConditionGroup {
@@ -29,13 +33,13 @@ type ConditionOrGroup = Condition | ConditionGroup;
 export interface Condition {
 	key: string;
 	operator: Operator;
-	value: any | any[]; // array of values used for 'in' operation. Can also be a regular expression to be used with the mathes_regex operator
+	value: CriteriaValue; // array of values used for 'in' operation. Can also be a regular expression to be used with the matches_regex operator
 }
 
 // The result for given criteria
 export interface EvaluationResult {
 	key: string;
-	value: any;
+	value: unknown;
 }
 
 // Main Criteria structure
@@ -51,7 +55,7 @@ interface Calculation {
 	inputKeys: string[];
 	filter?: {
 		operator: Operator;
-		value: any | any[];
+		value: CriteriaValue;
 	};
 }
 
@@ -65,7 +69,7 @@ interface Calculation {
  */
 export function evaluateCriteria(
 	criteria: Criteria,
-	data: Record<string, any>
+	data: CriteriaData
 ): EvaluationResult {
 	let result = {
 		key: "failed",
@@ -74,7 +78,7 @@ export function evaluateCriteria(
 	let evaluate = false;
 
 	// Run calculations
-	let calculatedData = {};
+	let calculatedData: CriteriaData = {};
 	if (criteria.calculations) {
 		calculatedData = runCalculations(criteria.calculations, data);
 	}
@@ -122,7 +126,7 @@ export function evaluateCriteria(
  */
 export function evaluateCriteriaConditions(
 	condition: ConditionOrGroup,
-	data: Record<string, any>
+	data: CriteriaData
 ): boolean {
 	// If this is a group, recursively evaluate
 	// Checks if the current condition object is actually a ConditionGroup (i.e. a nested condition group that contains the 'conditions' property)
@@ -156,43 +160,68 @@ export function evaluateCriteriaConditions(
  * @returns True if the condition is valid, false otherwise
  */
 function checkValuesWithOperator(
-	dataValue: any,
-	criteriaValue: any,
+	dataValue: unknown,
+	criteriaValue: CriteriaValue,
 	operator: Operator
 ): boolean {
+	if (!VALID_OPERATORS.includes(operator)) {
+		console.error(`Unknown operator: ${operator}`);
+		return false;
+	}
+
 	switch (operator) {
 		case "equals":
+			if (Array.isArray(criteriaValue) || criteriaValue instanceof RegExp) {
+				return false;
+			}
 			return dataValue === criteriaValue;
 		case "not_equals":
+			if (Array.isArray(criteriaValue) || criteriaValue instanceof RegExp) {
+				return false;
+			}
 			return dataValue !== criteriaValue;
 		case "greater_than":
-			return dataValue > criteriaValue;
+			if (isComparable(dataValue) && isComparable(criteriaValue)) {
+				return dataValue > criteriaValue;
+			}
+			return false;
 		case "less_than":
-			return dataValue < criteriaValue;
+			if (isComparable(dataValue) && isComparable(criteriaValue)) {
+				return dataValue < criteriaValue;
+			}
+			return false;
 		case "greater_than_equal":
-			return dataValue >= criteriaValue;
+			if (isComparable(dataValue) && isComparable(criteriaValue)) {
+				return dataValue >= criteriaValue;
+			}
+			return false;
 		case "less_than_equal":
-			return dataValue <= criteriaValue;
+			if (isComparable(dataValue) && isComparable(criteriaValue)) {
+				return dataValue <= criteriaValue;
+			}
+			return false;
 		case "in":
-			if (criteriaValue.length > 0) {
-				return (criteriaValue as any[]).some(
-					(value: any) => value === dataValue
-				);
+			if (Array.isArray(criteriaValue) && criteriaValue.length > 0) {
+				return criteriaValue.some((value) => value === dataValue);
 			}
 			return false;
 		case "not_in":
-			if (criteriaValue.length > 0) {
-				return !(criteriaValue as any[]).some(
-					(value: any) => value === dataValue
-				);
+			if (Array.isArray(criteriaValue) && criteriaValue.length > 0) {
+				return !criteriaValue.some((value) => value === dataValue);
 			}
 			return false;
 		case "matches_regex":
-			const regex1 = new RegExp(criteriaValue, "i"); // Uses 'i' flag for case-insensitivity
-			return regex1.test(dataValue);
+			if (criteriaValue instanceof RegExp) {
+				return typeof dataValue === "string" && criteriaValue.test(dataValue);
+			}
+			return new RegExp(String(criteriaValue), "i").test(String(dataValue));
 		case "not_matches_regex":
-			const regex2 = new RegExp(criteriaValue, "i"); // Uses 'i' flag for case-insensitivity
-			return !regex2.test(dataValue);
+			if (criteriaValue instanceof RegExp) {
+				return !(
+					typeof dataValue === "string" && criteriaValue.test(dataValue)
+				);
+			}
+			return !new RegExp(String(criteriaValue), "i").test(String(dataValue));
 
 		default:
 			// If an unknown operator is found, return false
@@ -201,8 +230,11 @@ function checkValuesWithOperator(
 	}
 }
 
-function runCalculations(calculations: Calculation[], data: any): object {
-	const calculatedData: { [key: string]: any } = {};
+function runCalculations(
+	calculations: Calculation[],
+	data: CriteriaData
+): Record<string, unknown> {
+	const calculatedData: Record<string, unknown> = {};
 
 	for (const calc of calculations) {
 		switch (calc.operation) {
@@ -239,4 +271,10 @@ function runCalculations(calculations: Calculation[], data: any): object {
 	}
 
 	return calculatedData;
+}
+
+function isComparable(
+	value: CriteriaValue | unknown
+): value is number | string {
+	return typeof value === "number" || typeof value === "string";
 }

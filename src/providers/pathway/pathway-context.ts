@@ -1,7 +1,7 @@
 import { createContext } from "react";
 import { Pathway } from "@/payload-types";
 import { PathwayFlowData } from "@/types/pathway";
-import type { PathwayVersion } from "@/actions/actions";
+import type { PathwayVersion } from "@/actions/flow-actions";
 
 /**
  * State shape for the pathway context

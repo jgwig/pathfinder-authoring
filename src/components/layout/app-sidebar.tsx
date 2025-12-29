@@ -58,7 +58,6 @@ export function AppSidebar() {
 		previewVersion,
 		isLoading,
 		isLoadingVersions,
-		isPreviewingVersion,
 		error,
 		createPathway,
 		fetchPathways,

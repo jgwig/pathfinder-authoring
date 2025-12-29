@@ -9,14 +9,8 @@ import {
 	CardHeader,
 	CardTitle,
 } from "@/components/ui/card";
-import {
-	Field,
-	FieldDescription,
-	FieldGroup,
-	FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { loginAction } from "@/actions/auth";
 import { useState } from "react";
 import { redirect } from "next/navigation";
 import { useAuth } from "@/providers/auth/use-auth";
@@ -39,7 +33,7 @@ export function LoginForm({
 
 		try {
 			login(email, password);
-		} catch (err) {
+		} catch {
 			setError("An unexpected error occurred");
 		} finally {
 			setIsLoading(false);

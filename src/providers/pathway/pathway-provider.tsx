@@ -10,7 +10,7 @@ import {
 	getPathwayVersions,
 	restorePathwayVersion,
 	type PathwayVersion,
-} from "@/actions/actions";
+} from "@/actions/flow-actions";
 import { useAuth } from "@/providers/auth/use-auth";
 import {
 	PathwayFlowData,
@@ -358,7 +358,7 @@ export const PathwayProvider = ({ children }: { children: ReactNode }) => {
 			setError(null);
 
 			try {
-				const { deletePathwayAction } = await import("@/actions/actions");
+				const { deletePathwayAction } = await import("@/actions/flow-actions");
 				const result = await deletePathwayAction(user, id);
 
 				if (result.success) {
