@@ -4,9 +4,10 @@ import {
 	ContentBlock,
 	contentBlockOptions,
 	ContentBlockType,
+	AnyBlockData,
 	getDefaultDataForType,
-	StageNodeData,
 } from "@/types/content";
+import { StageNodeData } from "@/types/flow/nodes";
 import { Node, useReactFlow } from "@xyflow/react";
 import {
 	DropdownMenu,
@@ -28,7 +29,7 @@ import { TextField } from "../ui/form-fields";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
-	const [blocks, setBlocks] = useState<ContentBlock<any>[]>([]);
+	const [blocks, setBlocks] = useState<ContentBlock<AnyBlockData>[]>([]);
 	const [title, setTitle] = useState<string>("");
 
 	const { updateNodeData } = useReactFlow();
@@ -65,7 +66,7 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 		setBlocks(blocks.filter((block) => block.id !== id));
 	}
 
-	function handleUpdateBlock(updatedBlock: ContentBlock<any>) {
+	function handleUpdateBlock(updatedBlock: ContentBlock<AnyBlockData>) {
 		setBlocks(
 			blocks.map((block) =>
 				block.id === updatedBlock.id ? updatedBlock : block
@@ -132,7 +133,7 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 						>
 							<SortableContent className="flex flex-col gap-4">
 								{blocks &&
-									blocks.map((block, i) => {
+									blocks.map((block) => {
 										return (
 											<SortableItem key={block.id} value={block.id}>
 												<div className="p-4 rounded-lg border flex flex-col ">

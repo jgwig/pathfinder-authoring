@@ -1,11 +1,8 @@
 "use server";
 
-import { ServiceListServerModel } from "@/types/service/server/serviceListServerModel";
-import { ServiceServerModel } from "@/types/service/server/serviceServerModel";
-import { Service } from "@/types/service/service";
-
+// Server action for fetching external services. Flow server actions now live in flow-actions.ts.
 export async function getServices(council: string) {
-	const baseURL = "https://earlyaccess-api-dev.daysix.co/";
+	const baseURL = "https://earlyaccess-api.daysix.co/";
 	const servicesURL = baseURL + council + "/community-services";
 
 	try {
@@ -15,5 +12,6 @@ export async function getServices(council: string) {
 		return data;
 	} catch (error) {
 		console.error(error);
+		throw error; // Re-throw to allow proper error handling
 	}
 }

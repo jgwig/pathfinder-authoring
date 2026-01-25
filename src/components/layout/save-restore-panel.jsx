@@ -10,6 +10,7 @@ export function SaveRestorePanel() {
 			<button className="xy-theme__button" onClick={onAdd}>
 				add node
 			</button>
+			<button className="xy-theme__button">Logout</button>
 		</Panel>
 	);
 }

@@ -96,7 +96,7 @@ export class Service {
 	public static fromServiceServerModel(
 		serverModel: ServiceServerModel
 	): Service {
-		let service = new Service({});
+		const service = new Service({});
 
 		service.id = serverModel.id;
 		service.source = serverModel.source || "manual-input";

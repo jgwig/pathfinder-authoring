@@ -1,4 +1,15 @@
-import { ContentBlockType, AnyBlockData } from "@/types/content";
+import {
+	AnyBlockData,
+	AssessmentBlockData,
+	ComponentBlockData,
+	ContentBlockType,
+	ExternalRecommendationData,
+	ImageBlockData,
+	ParagraphBlockData,
+	RecommendationBlockData,
+	TitleBlockData,
+	VideoBlockData,
+} from "@/types/content";
 
 export interface ValidationError {
 	field: string;
@@ -18,12 +29,11 @@ export const validateContentBlockData = (
 
 	switch (type) {
 		case "title":
-			if (typeof data === "object" && data !== null) {
-				const titleData = data as any;
-				if (!titleData.text || titleData.text.trim() === "") {
+			if (isTitleData(data)) {
+				if (!data.text || data.text.trim() === "") {
 					errors.push({ field: "text", message: "Title text is required" });
 				}
-				if (!titleData.level || titleData.level < 1 || titleData.level > 6) {
+				if (!data.level || data.level < 1 || data.level > 6) {
 					errors.push({
 						field: "level",
 						message: "Heading level must be between 1 and 6",
@@ -35,12 +45,8 @@ export const validateContentBlockData = (
 			break;
 
 		case "paragraph":
-			if (typeof data === "object" && data !== null) {
-				const paragraphData = data as any;
-				if (
-					!paragraphData.html &&
-					(!paragraphData.text || paragraphData.text.trim() === "")
-				) {
+			if (isParagraphData(data)) {
+				if (!data.html && (!data.text || data.text.trim() === "")) {
 					errors.push({
 						field: "text",
 						message: "Paragraph text or HTML content is required",
@@ -55,11 +61,10 @@ export const validateContentBlockData = (
 			break;
 
 		case "video":
-			if (typeof data === "object" && data !== null) {
-				const videoData = data as any;
-				if (!videoData.url || videoData.url.trim() === "") {
+			if (isVideoData(data)) {
+				if (!data.url || data.url.trim() === "") {
 					errors.push({ field: "url", message: "Video URL is required" });
-				} else if (!isValidUrl(videoData.url)) {
+				} else if (!isValidUrl(data.url)) {
 					errors.push({
 						field: "url",
 						message: "Video URL must be a valid URL",
@@ -71,17 +76,16 @@ export const validateContentBlockData = (
 			break;
 
 		case "image":
-			if (typeof data === "object" && data !== null) {
-				const imageData = data as any;
-				if (!imageData.url || imageData.url.trim() === "") {
+			if (isImageData(data)) {
+				if (!data.url || data.url.trim() === "") {
 					errors.push({ field: "url", message: "Image URL is required" });
-				} else if (!isValidUrl(imageData.url)) {
+				} else if (!isValidUrl(data.url)) {
 					errors.push({
 						field: "url",
 						message: "Image URL must be a valid URL",
 					});
 				}
-				if (!imageData.alt || imageData.alt.trim() === "") {
+				if (!data.alt || data.alt.trim() === "") {
 					errors.push({
 						field: "alt",
 						message: "Alt text is required for accessibility",
@@ -93,9 +97,8 @@ export const validateContentBlockData = (
 			break;
 
 		case "component":
-			if (typeof data === "object" && data !== null) {
-				const componentData = data as any;
-				if (!componentData.component || componentData.component.trim() === "") {
+			if (isComponentData(data)) {
+				if (!data.component || data.component.trim() === "") {
 					errors.push({
 						field: "component",
 						message: "Component name is required",
@@ -110,9 +113,8 @@ export const validateContentBlockData = (
 			break;
 
 		case "assessment":
-			if (typeof data === "object" && data !== null) {
-				const assessmentData = data as any;
-				if (!assessmentData.formId || assessmentData.formId.trim() === "") {
+			if (isAssessmentData(data)) {
+				if (!data.formId || data.formId.trim() === "") {
 					errors.push({ field: "formId", message: "Form ID is required" });
 				}
 			} else {
@@ -130,23 +132,45 @@ export const validateContentBlockData = (
 			break;
 
 		case "recommendation":
-			if (typeof data === "object" && data !== null) {
-				const recommendationData = data as any;
-				if (
-					!Array.isArray(recommendationData.services) ||
-					recommendationData.services.length === 0
-				) {
+			if (isRecommendationData(data)) {
+				if (!Array.isArray(data.services) || data.services.length === 0) {
 					errors.push({
 						field: "services",
 						message: "At least one service is required",
 					});
 				} else {
-					recommendationData.services.forEach((service: any, index: number) => {
+					data.services.forEach((service, index) => {
 						if (!service.slug || service.slug.trim() === "") {
 							errors.push({
 								field: `services.${index}.slug`,
 								message: `Service ${index + 1} slug is required`,
 							});
+						}
+						// Council is optional for backward compatibility but recommended for new services
+						// Metadata is optional but if present, validate it
+						if (service.metadata) {
+							if (
+								!service.metadata.title ||
+								service.metadata.title.trim() === ""
+							) {
+								errors.push({
+									field: `services.${index}.metadata.title`,
+									message: `Service ${
+										index + 1
+									} metadata title is required when metadata is present`,
+								});
+							}
+							if (
+								!service.metadata.image ||
+								service.metadata.image.trim() === ""
+							) {
+								errors.push({
+									field: `services.${index}.metadata.image`,
+									message: `Service ${
+										index + 1
+									} metadata image is required when metadata is present`,
+								});
+							}
 						}
 					});
 				}
@@ -159,18 +183,14 @@ export const validateContentBlockData = (
 			break;
 
 		case "externalRecommendation":
-			if (typeof data === "object" && data !== null) {
-				const externalData = data as any;
-				if (
-					!Array.isArray(externalData.services) ||
-					externalData.services.length === 0
-				) {
+			if (isExternalRecommendationData(data)) {
+				if (!Array.isArray(data.services) || data.services.length === 0) {
 					errors.push({
 						field: "services",
 						message: "At least one external service is required",
 					});
 				} else {
-					externalData.services.forEach((service: any, index: number) => {
+					data.services.forEach((service, index) => {
 						if (!service.title || service.title.trim() === "") {
 							errors.push({
 								field: `services.${index}.title`,
@@ -225,7 +245,47 @@ function isValidUrl(string: string): boolean {
 	try {
 		new URL(string);
 		return true;
-	} catch (_) {
+	} catch {
 		return false;
 	}
+}
+
+function isTitleData(data: AnyBlockData): data is TitleBlockData {
+	return isObject(data) && "text" in data && "level" in data;
+}
+
+function isParagraphData(data: AnyBlockData): data is ParagraphBlockData {
+	return isObject(data) && "text" in data;
+}
+
+function isVideoData(data: AnyBlockData): data is VideoBlockData {
+	return isObject(data) && "url" in data;
+}
+
+function isImageData(data: AnyBlockData): data is ImageBlockData {
+	return isObject(data) && "url" in data && "alt" in data;
+}
+
+function isComponentData(data: AnyBlockData): data is ComponentBlockData {
+	return isObject(data) && "component" in data;
+}
+
+function isAssessmentData(data: AnyBlockData): data is AssessmentBlockData {
+	return isObject(data) && "formId" in data;
+}
+
+function isRecommendationData(
+	data: AnyBlockData
+): data is RecommendationBlockData {
+	return isObject(data) && "services" in data;
+}
+
+function isExternalRecommendationData(
+	data: AnyBlockData
+): data is ExternalRecommendationData {
+	return isObject(data) && "services" in data;
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === "object" && value !== null;
 }
