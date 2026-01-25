@@ -25,6 +25,7 @@ import {
 	StageNodeData,
 } from "@/types/flow/flow";
 import { sanitizeFlowData } from "@/utils/flow-sanitization";
+import type { LibraryStageData } from "@/types/library";
 
 export type UseFlowStateArgs = {
 	flow: PathwayFlowData;
@@ -277,6 +278,60 @@ export function useFlowState({
 		},
 		[setNodes, setEdges, selectedNode, setSelectedNode]
 	);
+
+	// Add a page from the library to the canvas
+	const addPageFromLibrary = useCallback(
+		(stageData: LibraryStageData) => {
+			isLocalChangeRef.current = true;
+			const newId = crypto.randomUUID();
+
+			// Clone blocks with new IDs
+			const clonedBlocks = stageData.blocks.map((block) => ({
+				...block,
+				id: crypto.randomUUID(),
+				data: JSON.parse(JSON.stringify(block.data)),
+				config: block.config ? JSON.parse(JSON.stringify(block.config)) : undefined,
+			}));
+
+			// Get viewport center for positioning
+			const viewport = getViewport();
+			const position = {
+				x: -viewport.x / viewport.zoom + 400,
+				y: -viewport.y / viewport.zoom + 200,
+			};
+
+			const newNode: Node<StageNodeData> = {
+				id: newId,
+				type: "stageNode",
+				position,
+				data: {
+					title: stageData.title,
+					blocks: clonedBlocks,
+					state: {},
+				},
+				selected: true,
+			};
+
+			setNodes((nds) => [
+				...nds.map((node) => ({ ...node, selected: false })),
+				newNode,
+			]);
+			setSelectedNode(newNode);
+		},
+		[getViewport, setNodes, setSelectedNode]
+	);
+
+	// Listen for add-page-from-library events
+	useEffect(() => {
+		const handleAddPage = (event: CustomEvent<{ stageData: LibraryStageData }>) => {
+			addPageFromLibrary(event.detail.stageData);
+		};
+
+		window.addEventListener("add-page-from-library", handleAddPage as EventListener);
+		return () => {
+			window.removeEventListener("add-page-from-library", handleAddPage as EventListener);
+		};
+	}, [addPageFromLibrary]);
 
 	return {
 		nodes,

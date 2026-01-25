@@ -5,21 +5,37 @@ import {
 	BaseNodeHeaderTitle,
 } from "@/nodes/base-node";
 import { Handle, NodeProps, Position } from "@xyflow/react";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { BlockPreview } from "@/components/content-blocks/preview/block-preview";
 import { StageNodeData } from "@/types/flow/nodes";
-import { Copy, Trash2 } from "lucide-react";
+import { Copy, Trash2, BookmarkPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useFlowContext } from "@/providers/flow/flow-context";
+import { SavePageDialog } from "@/components/library/save-page-dialog";
 
-function StageNode({ id, data }: NodeProps<StageNodeData>) {
+function StageNode(props: NodeProps) {
+	const id = props.id as string;
+	const data = props.data as StageNodeData;
 	const { duplicateNode, deleteNode } = useFlowContext();
+	const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
 	return (
 		<BaseNode className={`w-[768px]`}>
 			<BaseNodeHeader className="border-b">
 				<BaseNodeHeaderTitle>{data.title}</BaseNodeHeaderTitle>
 				<div className="flex items-center gap-2">
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-7 w-7"
+						onClick={(e) => {
+							e.stopPropagation();
+							setSaveDialogOpen(true);
+						}}
+						title="Save to library"
+					>
+						<BookmarkPlus className="h-4 w-4" />
+					</Button>
 					<Button
 						variant="ghost"
 						size="icon"
@@ -85,6 +101,13 @@ function StageNode({ id, data }: NodeProps<StageNodeData>) {
 					/>
 				</>
 			)}
+
+			{/* Save Page to Library Dialog */}
+			<SavePageDialog
+				open={saveDialogOpen}
+				onOpenChange={setSaveDialogOpen}
+				stageData={data}
+			/>
 		</BaseNode>
 	);
 }

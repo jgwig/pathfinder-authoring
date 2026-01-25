@@ -1,7 +1,7 @@
 "use client";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { LibrarySidebar } from "@/components/layout/library-sidebar";
 
 import { ReactFlowProvider } from "@xyflow/react";
 import { ServicesProvider } from "@/providers/services/services-provider";
@@ -17,7 +17,7 @@ export default function RootLayout({
 			<ReactFlowProvider>
 				<ServicesProvider>
 					<PathwayProvider>
-						<AppSidebar />
+						<LibrarySidebar />
 						<SidebarTrigger />
 						{children}
 					</PathwayProvider>

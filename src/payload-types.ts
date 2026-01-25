@@ -70,6 +70,8 @@ export interface Config {
     users: User;
     media: Media;
     pathways: Pathway;
+    'block-library': BlockLibrary;
+    'page-library': PageLibrary;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -80,6 +82,8 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     pathways: PathwaysSelect<false> | PathwaysSelect<true>;
+    'block-library': BlockLibrarySelect<false> | BlockLibrarySelect<true>;
+    'page-library': PageLibrarySelect<false> | PageLibrarySelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -183,6 +187,133 @@ export interface Pathway {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "block-library".
+ */
+export interface BlockLibrary {
+  id: number;
+  /**
+   * A memorable name for this block
+   */
+  name: string;
+  /**
+   * Optional description to help identify this block
+   */
+  description?: string | null;
+  user: number | User;
+  /**
+   * Serialized ContentBlock data
+   */
+  blockData:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * The type of content block
+   */
+  blockType:
+    | 'intro'
+    | 'title'
+    | 'paragraph'
+    | 'video'
+    | 'image'
+    | 'assessment'
+    | 'recommendation'
+    | 'assessmentResult'
+    | 'externalRecommendation'
+    | 'component'
+    | 'dropdown'
+    | 'html'
+    | 'column';
+  /**
+   * Tags for organizing blocks
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional visual preview
+   */
+  thumbnail?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-library".
+ */
+export interface PageLibrary {
+  id: number;
+  /**
+   * A memorable name for this page
+   */
+  name: string;
+  /**
+   * Optional description to help identify this page
+   */
+  description?: string | null;
+  user: number | User;
+  /**
+   * Serialized StageNodeData (blocks, title, state)
+   */
+  stageData:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Number of blocks in this page
+   */
+  blockCount?: number | null;
+  /**
+   * Types of blocks contained in this page
+   */
+  blockTypes?:
+    | (
+        | 'intro'
+        | 'title'
+        | 'paragraph'
+        | 'video'
+        | 'image'
+        | 'assessment'
+        | 'recommendation'
+        | 'assessmentResult'
+        | 'externalRecommendation'
+        | 'component'
+        | 'dropdown'
+        | 'html'
+        | 'column'
+      )[]
+    | null;
+  /**
+   * Tags for organizing pages
+   */
+  tags?:
+    | {
+        tag: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Optional visual preview
+   */
+  thumbnail?: (number | null) | Media;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -216,6 +347,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'pathways';
         value: number | Pathway;
+      } | null)
+    | ({
+        relationTo: 'block-library';
+        value: number | BlockLibrary;
+      } | null)
+    | ({
+        relationTo: 'page-library';
+        value: number | PageLibrary;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -308,6 +447,47 @@ export interface PathwaysSelect<T extends boolean = true> {
   name?: T;
   user?: T;
   data?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "block-library_select".
+ */
+export interface BlockLibrarySelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  user?: T;
+  blockData?: T;
+  blockType?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  thumbnail?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "page-library_select".
+ */
+export interface PageLibrarySelect<T extends boolean = true> {
+  name?: T;
+  description?: T;
+  user?: T;
+  stageData?: T;
+  blockCount?: T;
+  blockTypes?: T;
+  tags?:
+    | T
+    | {
+        tag?: T;
+        id?: T;
+      };
+  thumbnail?: T;
   updatedAt?: T;
   createdAt?: T;
 }

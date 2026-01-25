@@ -16,8 +16,9 @@ import {
 	DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
 import { Button } from "../ui/button";
-import { GripVertical, Info, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { GripVertical, Info, Plus, X, BookmarkPlus } from "lucide-react";
+import { useEffect, useState, useCallback } from "react";
+import { SaveBlockDialog } from "@/components/library/save-block-dialog";
 import {
 	Sortable,
 	SortableContent,
@@ -31,8 +32,42 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 	const [blocks, setBlocks] = useState<ContentBlock<AnyBlockData>[]>([]);
 	const [title, setTitle] = useState<string>("");
+	const [blockToSave, setBlockToSave] =
+		useState<ContentBlock<AnyBlockData> | null>(null);
+	const [saveDialogOpen, setSaveDialogOpen] = useState(false);
 
 	const { updateNodeData } = useReactFlow();
+
+	// Handler for adding blocks from library
+	const handleAddBlockFromLibrary = useCallback(
+		(event: CustomEvent<{ block: ContentBlock<AnyBlockData> }>) => {
+			const { block } = event.detail;
+			// Create a new block with a fresh ID
+			const newBlock = new ContentBlock({
+				type: block.type,
+				data: JSON.parse(JSON.stringify(block.data)),
+				config: block.config
+					? JSON.parse(JSON.stringify(block.config))
+					: undefined,
+			});
+			setBlocks((prev) => [...prev, newBlock]);
+		},
+		[],
+	);
+
+	// Listen for add-block-from-library events
+	useEffect(() => {
+		window.addEventListener(
+			"add-block-from-library",
+			handleAddBlockFromLibrary as EventListener,
+		);
+		return () => {
+			window.removeEventListener(
+				"add-block-from-library",
+				handleAddBlockFromLibrary as EventListener,
+			);
+		};
+	}, [handleAddBlockFromLibrary]);
 
 	// Initialise the component state when the node changes
 	useEffect(() => {
@@ -69,8 +104,8 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 	function handleUpdateBlock(updatedBlock: ContentBlock<AnyBlockData>) {
 		setBlocks(
 			blocks.map((block) =>
-				block.id === updatedBlock.id ? updatedBlock : block
-			)
+				block.id === updatedBlock.id ? updatedBlock : block,
+			),
 		);
 	}
 
@@ -152,14 +187,34 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 																{contentBlockOptions[block.type]}
 															</p>
 														</div>
-														<Button
-															variant="ghost"
-															size="icon"
-															className="size-8"
-															onClick={() => handleRemoveBlock(block.id)}
-														>
-															<X className="h-4 w-4 text-red-800" />
-														</Button>
+														<div className="flex flex-row items-center gap-1">
+															<Tooltip>
+																<TooltipTrigger asChild>
+																	<Button
+																		variant="ghost"
+																		size="icon"
+																		className="size-8"
+																		onClick={() => {
+																			setBlockToSave(block);
+																			setSaveDialogOpen(true);
+																		}}
+																	>
+																		<BookmarkPlus className="h-4 w-4 text-muted-foreground" />
+																	</Button>
+																</TooltipTrigger>
+																<TooltipContent>
+																	<p className="text-xs">Save to library</p>
+																</TooltipContent>
+															</Tooltip>
+															<Button
+																variant="ghost"
+																size="icon"
+																className="size-8"
+																onClick={() => handleRemoveBlock(block.id)}
+															>
+																<X className="h-4 w-4 text-red-800" />
+															</Button>
+														</div>
 													</div>
 													<BlockEditor
 														block={block}
@@ -197,6 +252,14 @@ export function Inspector({ node }: { node: Node<StageNodeData> | undefined }) {
 					</DropdownMenuContent>
 				</DropdownMenu>
 			</div>
+
+			{/* Save Block to Library Dialog */}
+			<SaveBlockDialog
+				open={saveDialogOpen}
+				onOpenChange={setSaveDialogOpen}
+				block={blockToSave}
+				onSaved={() => setBlockToSave(null)}
+			/>
 		</div>
 	);
 }
