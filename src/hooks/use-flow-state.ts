@@ -24,6 +24,7 @@ import {
 	DEFAULT_VIEWPORT,
 	StageNodeData,
 } from "@/types/flow/flow";
+import { sanitizeFlowData } from "@/utils/flow-sanitization";
 
 export type UseFlowStateArgs = {
 	flow: PathwayFlowData;
@@ -46,6 +47,8 @@ export type UseFlowStateResult = {
 	applyFlow: (next: PathwayFlowData) => void;
 	getFlowSnapshot: () => PathwayFlowData;
 	isLocalChangeRef: MutableRefObject<boolean>;
+	duplicateNode: (nodeId: string) => void;
+	deleteNode: (nodeId: string) => void;
 };
 
 /**
@@ -107,7 +110,7 @@ export function useFlowState({
 	const onConnect = useCallback<OnConnect>(
 		(params) => {
 			isLocalChangeRef.current = true;
-			setEdges((eds) => addEdge(params, eds));
+			setEdges((eds) => addEdge({ ...params, type: "criteriaEdge" }, eds));
 		},
 		[setEdges]
 	);
@@ -169,16 +172,111 @@ export function useFlowState({
 	);
 
 	const getFlowSnapshot = useCallback((): PathwayFlowData => {
+		let flowData: PathwayFlowData;
+
 		if (rfInstance) {
-			return rfInstance.toObject() as PathwayFlowData;
+			flowData = rfInstance.toObject() as PathwayFlowData;
+		} else {
+			flowData = {
+				nodes,
+				edges,
+				viewport: getViewport() ?? DEFAULT_VIEWPORT,
+			};
 		}
 
-		return {
-			nodes,
-			edges,
-			viewport: getViewport() ?? DEFAULT_VIEWPORT,
-		};
+		// Sanitize the flow data to remove non-serializable properties
+		return sanitizeFlowData(flowData);
 	}, [edges, getViewport, nodes, rfInstance]);
+
+	const duplicateNode = useCallback(
+		(nodeId: string) => {
+			const nodeToDuplicate = nodes.find((node) => node.id === nodeId);
+			if (!nodeToDuplicate) return;
+
+			isLocalChangeRef.current = true;
+			const newId = crypto.randomUUID();
+
+			// Deep clone node data based on node type
+			let clonedData: StageNodeData;
+			if (nodeToDuplicate.type === "stageNode") {
+				// Deep clone the content blocks with new IDs
+				const clonedBlocks = nodeToDuplicate.data.blocks.map((block) => {
+					// Use sanitization to remove non-serializable properties
+					const sanitizedBlock = {
+						...block,
+						id: crypto.randomUUID(),
+					};
+
+					// For recommendation blocks, ensure we don't copy the test property
+					if (block.type === "recommendation" && block.data) {
+						const { test, ...cleanData } = block.data as any;
+						return {
+							...sanitizedBlock,
+							data: JSON.parse(JSON.stringify(cleanData)),
+						};
+					}
+
+					return {
+						...sanitizedBlock,
+						data: JSON.parse(JSON.stringify(block.data)),
+					};
+				});
+
+				clonedData = {
+					...nodeToDuplicate.data,
+					blocks: clonedBlocks,
+					title: `${nodeToDuplicate.data.title} (Copy)`,
+					state: nodeToDuplicate.data.state
+						? JSON.parse(JSON.stringify(nodeToDuplicate.data.state))
+						: undefined,
+				};
+			} else {
+				// For criteria nodes or other node types, deep clone the entire data
+				clonedData = JSON.parse(
+					JSON.stringify(nodeToDuplicate.data)
+				) as StageNodeData;
+			}
+
+			// Create new node with offset position
+			const newNode: Node<StageNodeData> = {
+				id: newId,
+				type: nodeToDuplicate.type,
+				position: {
+					x: nodeToDuplicate.position.x + 50,
+					y: nodeToDuplicate.position.y + 50,
+				},
+				data: clonedData,
+				selected: true,
+			};
+
+			setNodes((nds) => [
+				...nds.map((node) => ({ ...node, selected: false })),
+				newNode,
+			]);
+			setSelectedNode(newNode);
+		},
+		[nodes, setNodes, setSelectedNode]
+	);
+
+	const deleteNode = useCallback(
+		(nodeId: string) => {
+			isLocalChangeRef.current = true;
+
+			// Remove the node
+			setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+
+			// Remove all edges connected to this node
+			setEdges((eds) =>
+				eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId)
+			);
+
+			// Clear selection if the deleted node was selected
+			if (selectedNode?.id === nodeId) {
+				setSelectedNode(undefined);
+			}
+		},
+		[setNodes, setEdges, selectedNode, setSelectedNode]
+	);
 
 	return {
 		nodes,
@@ -194,5 +292,7 @@ export function useFlowState({
 		applyFlow,
 		getFlowSnapshot,
 		isLocalChangeRef,
+		duplicateNode,
+		deleteNode,
 	};
 }

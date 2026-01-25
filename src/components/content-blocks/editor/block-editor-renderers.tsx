@@ -13,6 +13,12 @@ import {
 	ServiceCardConfig,
 	FormItemType,
 	FormItem,
+	ColumnBlockData,
+	ContentBlock,
+	AnyBlockData,
+	contentBlockOptions,
+	getDefaultDataForType,
+	ContentBlockType,
 } from "@/types/content";
 import {
 	TextField,
@@ -34,6 +40,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { AssessmentField } from "@/components/ui/assessment-field";
 import { FormFieldEditorModal } from "@/components/form-editor/form-field-editor-modal";
+import { Sortable, SortableItem } from "@/components/ui/sortable";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { BlockEditor } from "./block-editor";
 
 interface BlockRendererProps<T> {
 	data: T;
@@ -260,7 +269,7 @@ export const RecommendationBlockRenderer = ({
 	const addService = () => {
 		handleServicesChange([
 			...data.services,
-			{ slug: "", config: { type: "medium" } },
+			{ slug: "", council, config: { type: "medium" } },
 		]);
 	};
 
@@ -269,12 +278,23 @@ export const RecommendationBlockRenderer = ({
 	};
 
 	const updateServiceSlug = (index: number, slug: string) => {
+		// Find the full service object to capture metadata
+		const selectedService = services?.find((s) => s.name === slug);
+
 		handleServicesChange(
 			data.services.map((service, i) =>
 				i === index
 					? {
 							...service,
 							slug,
+							council, // Store current council
+							metadata: selectedService
+								? {
+										title: selectedService.title,
+										image: selectedService.image,
+										excerpt: selectedService.excerpt,
+								  }
+								: service.metadata, // Preserve existing metadata if service not found
 					  }
 					: service
 			)
@@ -645,6 +665,200 @@ export const AssessmentResultRenderer = ({
 				Assessment result blocks contain nested title and paragraph blocks.
 				Consider implementing as a specialized component.
 			</p>
+		</div>
+	);
+};
+
+export const ColumnBlockRenderer = ({
+	data,
+	onChange,
+}: BlockRendererProps<ColumnBlockData>) => {
+	const [showLeftAddMenu, setShowLeftAddMenu] = useState(false);
+	const [showRightAddMenu, setShowRightAddMenu] = useState(false);
+
+	const handleAddBlock = (column: "left" | "right", blockType: string) => {
+		const blockTypeTyped = blockType as ContentBlockType;
+		const newBlock = new ContentBlock({
+			type: blockTypeTyped,
+			data: getDefaultDataForType(blockTypeTyped),
+		});
+
+		if (column === "left") {
+			onChange({
+				...data,
+				leftColumn: [...(data.leftColumn || []), newBlock],
+			});
+			setShowLeftAddMenu(false);
+		} else {
+			onChange({
+				...data,
+				rightColumn: [...(data.rightColumn || []), newBlock],
+			});
+			setShowRightAddMenu(false);
+		}
+	};
+
+	const handleUpdateBlock = (
+		column: "left" | "right",
+		blockId: string,
+		updatedBlock: ContentBlock<AnyBlockData>
+	) => {
+		if (column === "left") {
+			onChange({
+				...data,
+				leftColumn: (data.leftColumn || []).map((block) =>
+					block.id === blockId ? updatedBlock : block
+				),
+			});
+		} else {
+			onChange({
+				...data,
+				rightColumn: (data.rightColumn || []).map((block) =>
+					block.id === blockId ? updatedBlock : block
+				),
+			});
+		}
+	};
+
+	const handleDeleteBlock = (column: "left" | "right", blockId: string) => {
+		if (column === "left") {
+			onChange({
+				...data,
+				leftColumn: (data.leftColumn || []).filter(
+					(block) => block.id !== blockId
+				),
+			});
+		} else {
+			onChange({
+				...data,
+				rightColumn: (data.rightColumn || []).filter(
+					(block) => block.id !== blockId
+				),
+			});
+		}
+	};
+
+	const handleReorderBlocks = (
+		column: "left" | "right",
+		reorderedBlocks: ContentBlock<AnyBlockData>[]
+	) => {
+		if (column === "left") {
+			onChange({
+				...data,
+				leftColumn: reorderedBlocks,
+			});
+		} else {
+			onChange({
+				...data,
+				rightColumn: reorderedBlocks,
+			});
+		}
+	};
+
+	const renderColumn = (
+		column: "left" | "right",
+		blocks: ContentBlock<AnyBlockData>[],
+		showAddMenu: boolean,
+		setShowAddMenu: (show: boolean) => void
+	) => {
+		return (
+			<div className="flex-1 border rounded-lg p-4 space-y-4 bg-muted/30">
+				<div className="flex items-center justify-between mb-2">
+					<h4 className="font-medium text-sm">
+						{column === "left" ? "Left Column" : "Right Column"}
+					</h4>
+					<DropdownMenu open={showAddMenu} onOpenChange={setShowAddMenu}>
+						<DropdownMenuTrigger asChild>
+							<Button variant="outline" size="sm">
+								<Plus className="h-4 w-4 mr-1" />
+								Add Block
+							</Button>
+						</DropdownMenuTrigger>
+						<DropdownMenuContent>
+							{Object.entries(contentBlockOptions)
+								.filter(([key]) => key !== "column") // Don't allow nested columns
+								.map(([key, label]) => (
+									<DropdownMenuItem
+										key={key}
+										onClick={() => handleAddBlock(column, key)}
+									>
+										{label}
+									</DropdownMenuItem>
+								))}
+						</DropdownMenuContent>
+					</DropdownMenu>
+				</div>
+
+				{blocks.length === 0 ? (
+					<div className="text-center py-8 text-muted-foreground text-sm">
+						No blocks yet. Click "Add Block" to get started.
+					</div>
+				) : (
+					<Sortable
+						value={blocks}
+						onValueChange={(reorderedBlocks) =>
+							handleReorderBlocks(column, reorderedBlocks)
+						}
+						getItemValue={(block) => block.id}
+					>
+						{blocks.map((block) => (
+							<SortableItem key={block.id} value={block.id} asChild>
+								<div className="bg-background border rounded-lg p-3 space-y-3">
+									<div className="flex items-start gap-2">
+										<button className="cursor-grab active:cursor-grabbing mt-1">
+											<GripVertical className="h-4 w-4 text-muted-foreground" />
+										</button>
+										<div className="flex-1 min-w-0">
+											<div className="flex items-center justify-between mb-2">
+												<span className="text-xs font-medium text-muted-foreground">
+													{contentBlockOptions[block.type]}
+												</span>
+												<Button
+													variant="ghost"
+													size="sm"
+													onClick={() => handleDeleteBlock(column, block.id)}
+													className="h-6 w-6 p-0"
+												>
+													<Trash2 className="h-3 w-3" />
+												</Button>
+											</div>
+											<BlockEditor
+												block={block}
+												handleUpdateBlock={(updatedBlock) =>
+													handleUpdateBlock(column, block.id, updatedBlock)
+												}
+											/>
+										</div>
+									</div>
+								</div>
+							</SortableItem>
+						))}
+					</Sortable>
+				)}
+			</div>
+		);
+	};
+
+	return (
+		<div className="space-y-4">
+			<div className="text-sm text-muted-foreground">
+				Create a two-column layout by adding content blocks to each column. Drag
+				to reorder items within each column.
+			</div>
+			<div className="flex flex-col gap-4">
+				{renderColumn(
+					"left",
+					data.leftColumn || [],
+					showLeftAddMenu,
+					setShowLeftAddMenu
+				)}
+				{renderColumn(
+					"right",
+					data.rightColumn || [],
+					showRightAddMenu,
+					setShowRightAddMenu
+				)}
+			</div>
 		</div>
 	);
 };

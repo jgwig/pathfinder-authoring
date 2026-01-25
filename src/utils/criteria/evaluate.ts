@@ -49,7 +49,7 @@ export interface Criteria {
 	criteria: ConditionGroup[];
 }
 
-interface Calculation {
+export interface Calculation {
 	outputKey: string;
 	operation: "countWhere" | "sum"; // can be extended with more operations
 	inputKeys: string[];
@@ -71,7 +71,7 @@ export function evaluateCriteria(
 	criteria: Criteria,
 	data: CriteriaData
 ): EvaluationResult {
-	let result = {
+	let result: EvaluationResult = {
 		key: "failed",
 		value: "Failed to evaluate the criteria with the state provided",
 	};
@@ -230,7 +230,7 @@ function checkValuesWithOperator(
 	}
 }
 
-function runCalculations(
+export function runCalculations(
 	calculations: Calculation[],
 	data: CriteriaData
 ): Record<string, unknown> {
@@ -242,11 +242,31 @@ function runCalculations(
 				let count = 0;
 				for (const key of calc.inputKeys) {
 					if (calc.filter) {
+						// Parse filter value if it's a string and operator is 'in' or 'not_in'
+						let filterValue = calc.filter.value;
+						if (
+							(calc.filter.operator === "in" ||
+								calc.filter.operator === "not_in") &&
+							typeof filterValue === "string"
+						) {
+							filterValue = filterValue
+								.split(",")
+								.map((v) => v.trim())
+								.filter(Boolean)
+								.map((v) => {
+									// Try to parse each item
+									if (v.toLowerCase() === "true") return true;
+									if (v.toLowerCase() === "false") return false;
+									const numVal = Number(v);
+									return !isNaN(numVal) && v !== "" ? numVal : v;
+								});
+						}
+
 						// Run the operator check
 						if (
 							checkValuesWithOperator(
 								get(data, key),
-								calc.filter.value,
+								filterValue,
 								calc.filter.operator
 							)
 						) {

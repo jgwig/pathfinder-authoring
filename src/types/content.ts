@@ -14,7 +14,8 @@ export type ContentBlockType =
 	| "externalRecommendation"
 	| "component"
 	| "dropdown"
-	| "html";
+	| "html"
+	| "column";
 
 // Minimal placeholder types for referenced but unspecified shapes
 export interface ServiceCardConfig {
@@ -106,6 +107,13 @@ export interface ImageBlockData {
 export interface RecommendationBlockData {
 	services: {
 		slug: string;
+		council?: string; // Track which council this service belongs to (optional for backward compatibility)
+		// Cached display metadata for graceful degradation
+		metadata?: {
+			title: string;
+			image: string;
+			excerpt?: string;
+		};
 		config?: ServiceCardConfig;
 	}[];
 	test?: Service;
@@ -140,6 +148,11 @@ export type AssessmentResultData = {
 	cardStyles: string;
 };
 
+export interface ColumnBlockData {
+	leftColumn: ContentBlock<AnyBlockData>[];
+	rightColumn: ContentBlock<AnyBlockData>[];
+}
+
 export type AnyBlockData =
 	| IntroBlockData
 	| TitleBlockData
@@ -152,6 +165,7 @@ export type AnyBlockData =
 	| DropdownBlockData
 	| AssessmentBlockData
 	| AssessmentResultData
+	| ColumnBlockData
 	| string; // for html raw string
 
 export type Stage = {
@@ -173,6 +187,7 @@ export const contentBlockOptions: Record<ContentBlockType, string> = {
 	component: "Component",
 	dropdown: "Dropdown",
 	html: "HTML",
+	column: "Column Layout",
 };
 
 export function getDefaultDataForType(type: ContentBlockType): AnyBlockData {
@@ -207,6 +222,11 @@ export function getDefaultDataForType(type: ContentBlockType): AnyBlockData {
 				title: { text: "", level: 1 as const },
 				paragraph: { text: "" },
 				cardStyles: "",
+			};
+		case "column":
+			return {
+				leftColumn: [],
+				rightColumn: [],
 			};
 		default:
 			return "";

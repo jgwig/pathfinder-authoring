@@ -11,6 +11,7 @@ import {
 	RecommendationBlockData,
 	TitleBlockData,
 	VideoBlockData,
+	ColumnBlockData,
 } from "@/types/content";
 import { ContentBlock } from "@/types/content";
 import {
@@ -26,6 +27,7 @@ import {
 	RecommendationBlockRenderer,
 	TitleBlockRenderer,
 	VideoBlockRenderer,
+	ColumnBlockRenderer,
 } from "./block-preview-renderers";
 
 export function BlockPreview({ block }: { block: ContentBlock<AnyBlockData> }) {
@@ -63,6 +65,8 @@ export function BlockPreview({ block }: { block: ContentBlock<AnyBlockData> }) {
 				return <DropdownBlockRenderer data={data as DropdownBlockData} />;
 			case "assessmentResult":
 				return <AssessmentResultRenderer data={data as AssessmentResultData} />;
+			case "column":
+				return <ColumnBlockRenderer data={data as ColumnBlockData} />;
 			default:
 				return (
 					<div className="p-4 bg-muted rounded-lg">

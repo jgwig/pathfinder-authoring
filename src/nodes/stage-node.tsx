@@ -8,15 +8,46 @@ import { Handle, NodeProps, Position } from "@xyflow/react";
 import { memo } from "react";
 import { BlockPreview } from "@/components/content-blocks/preview/block-preview";
 import { StageNodeData } from "@/types/flow/nodes";
+import { Copy, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useFlowContext } from "@/providers/flow/flow-context";
 
 function StageNode({ id, data }: NodeProps<StageNodeData>) {
+	const { duplicateNode, deleteNode } = useFlowContext();
+
 	return (
 		<BaseNode className={`w-[768px]`}>
 			<BaseNodeHeader className="border-b">
 				<BaseNodeHeaderTitle>{data.title}</BaseNodeHeaderTitle>
-				<p className="text-xs text-muted-foreground border px-1 rounded-full">
-					Stage
-				</p>
+				<div className="flex items-center gap-2">
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-7 w-7"
+						onClick={(e) => {
+							e.stopPropagation();
+							duplicateNode(id);
+						}}
+						title="Duplicate node"
+					>
+						<Copy className="h-4 w-4" />
+					</Button>
+					<Button
+						variant="ghost"
+						size="icon"
+						className="h-7 w-7"
+						onClick={(e) => {
+							e.stopPropagation();
+							deleteNode(id);
+						}}
+						title="Delete node"
+					>
+						<Trash2 className="h-4 w-4" />
+					</Button>
+					<p className="text-xs text-muted-foreground border px-1 rounded-full">
+						Stage
+					</p>
+				</div>
 			</BaseNodeHeader>
 			<BaseNodeContent className="flex min-h-[600px]   flex-col">
 				{data.blocks.length === 0 && (

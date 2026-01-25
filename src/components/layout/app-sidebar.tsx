@@ -160,51 +160,151 @@ export function AppSidebar() {
 					) : (
 						<div className="space-y-3">
 							{pathways.map((pathway) => (
-								<Card
-									key={pathway.id}
-									className={`cursor-pointer hover:bg-accent transition-colors ${
-										selectedPathway?.id === pathway.id
-											? "ring-2 ring-primary"
-											: ""
-									}`}
-									onClick={() => selectPathway(pathway.id)}
-								>
-									<CardHeader className="p-4 pb-2">
-										<CardTitle className="text-base flex items-center justify-between">
-											<span>{pathway.name}</span>
-											<div className="flex items-center gap-2">
-												{selectedPathway?.id === pathway.id && (
-													<Check className="w-4 h-4 text-primary" />
-												)}
+								<div key={pathway.id}>
+									<Card
+										className={`cursor-pointer hover:bg-accent transition-colors ${
+											selectedPathway?.id === pathway.id
+												? "ring-2 ring-primary"
+												: ""
+										}`}
+										onClick={() => selectPathway(pathway.id)}
+									>
+										<CardHeader className="p-4 pb-2">
+											<CardTitle className="text-base flex items-center justify-between">
+												<span>{pathway.name}</span>
+												<div className="flex items-center gap-2">
+													{selectedPathway?.id === pathway.id && (
+														<Check className="w-4 h-4 text-primary" />
+													)}
+													<Button
+														variant="ghost"
+														size="icon"
+														className="h-6 w-6 text-destructive hover:text-destructive"
+														onClick={(e) => {
+															e.stopPropagation();
+															setPathwayToDelete(pathway.id);
+														}}
+														disabled={isLoading}
+													>
+														<Trash2 className="w-3 h-3" />
+													</Button>
+												</div>
+											</CardTitle>
+											<CardDescription className="text-xs">
+												{getAuthorEmail(pathway)}
+											</CardDescription>
+										</CardHeader>
+										<CardContent className="p-4 pt-0">
+											<p className="text-xs text-muted-foreground">
+												Created {formatDate(pathway.createdAt)}
+											</p>
+										</CardContent>
+									</Card>
+									{/* Version History Section */}
+									{selectedPathway && selectedPathway?.id === pathway.id && (
+										<Collapsible
+											open={isVersionsOpen}
+											onOpenChange={setIsVersionsOpen}
+											className="mt-6"
+										>
+											<CollapsibleTrigger asChild>
 												<Button
 													variant="ghost"
-													size="icon"
-													className="h-6 w-6 text-destructive hover:text-destructive"
-													onClick={(e) => {
-														e.stopPropagation();
-														setPathwayToDelete(pathway.id);
-													}}
-													disabled={isLoading}
+													className="w-full justify-between px-2"
 												>
-													<Trash2 className="w-3 h-3" />
+													<span className="flex items-center gap-2">
+														<History className="w-4 h-4" />
+														Version History
+													</span>
+													<ChevronDown
+														className={`w-4 h-4 transition-transform ${
+															isVersionsOpen ? "rotate-180" : ""
+														}`}
+													/>
 												</Button>
-											</div>
-										</CardTitle>
-										<CardDescription className="text-xs">
-											{getAuthorEmail(pathway)}
-										</CardDescription>
-									</CardHeader>
-									<CardContent className="p-4 pt-0">
-										<p className="text-xs text-muted-foreground">
-											Created {formatDate(pathway.createdAt)}
-										</p>
-									</CardContent>
-								</Card>
+											</CollapsibleTrigger>
+											<CollapsibleContent className="pt-2">
+												{isLoadingVersions ? (
+													<div className="flex items-center justify-center py-4">
+														<Loader2 className="w-4 h-4 animate-spin mr-2" />
+														<span className="text-sm text-muted-foreground">
+															Loading versions...
+														</span>
+													</div>
+												) : versions.length === 0 ? (
+													<div className="text-sm text-muted-foreground py-2 px-2">
+														No previous versions
+													</div>
+												) : (
+													<ScrollArea className="h-[200px]">
+														<div className="space-y-2 pr-2">
+															{versions.map((version, index) => {
+																const isCurrentVersion = index === 0;
+																const isBeingPreviewed =
+																	previewVersion?.id === version.id;
+
+																return (
+																	<div
+																		key={version.id}
+																		className={`flex items-center justify-between p-2 rounded-md border transition-colors cursor-pointer ${
+																			isBeingPreviewed
+																				? "ring-2 ring-blue-500 bg-blue-50 dark:bg-blue-950"
+																				: "bg-card text-card-foreground hover:bg-accent"
+																		}`}
+																		onClick={() => {
+																			if (isCurrentVersion) {
+																				clearPreview();
+																			} else {
+																				previewVersionById(version.id);
+																			}
+																		}}
+																	>
+																		<div className="flex flex-col">
+																			<span className="text-xs font-medium flex items-center gap-1">
+																				{isCurrentVersion
+																					? "Current"
+																					: `v${versions.length - index}`}
+																				{isBeingPreviewed &&
+																					!isCurrentVersion && (
+																						<span className="text-[10px] text-blue-600 dark:text-blue-400">
+																							(Previewing)
+																						</span>
+																					)}
+																			</span>
+																			<span className="text-xs text-muted-foreground">
+																				{formatDateTime(version.createdAt)}
+																			</span>
+																		</div>
+																		{!isCurrentVersion && (
+																			<Button
+																				variant="ghost"
+																				size="sm"
+																				className="h-7 px-2"
+																				onClick={(e) => {
+																					e.stopPropagation();
+																					setVersionToRestore(version.id);
+																				}}
+																				disabled={isLoading}
+																			>
+																				<RotateCcw className="w-3 h-3 mr-1" />
+																				Restore
+																			</Button>
+																		)}
+																	</div>
+																);
+															})}
+														</div>
+													</ScrollArea>
+												)}
+											</CollapsibleContent>
+										</Collapsible>
+									)}
+								</div>
 							))}
 						</div>
 					)}
 
-					{/* Version History Section */}
+					{/* Version History Section
 					{selectedPathway && (
 						<Collapsible
 							open={isVersionsOpen}
@@ -298,7 +398,7 @@ export function AppSidebar() {
 								)}
 							</CollapsibleContent>
 						</Collapsible>
-					)}
+					)} */}
 				</div>
 			</SidebarContent>
 			<SidebarFooter>

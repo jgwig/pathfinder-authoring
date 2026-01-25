@@ -146,6 +146,32 @@ export const validateContentBlockData = (
 								message: `Service ${index + 1} slug is required`,
 							});
 						}
+						// Council is optional for backward compatibility but recommended for new services
+						// Metadata is optional but if present, validate it
+						if (service.metadata) {
+							if (
+								!service.metadata.title ||
+								service.metadata.title.trim() === ""
+							) {
+								errors.push({
+									field: `services.${index}.metadata.title`,
+									message: `Service ${
+										index + 1
+									} metadata title is required when metadata is present`,
+								});
+							}
+							if (
+								!service.metadata.image ||
+								service.metadata.image.trim() === ""
+							) {
+								errors.push({
+									field: `services.${index}.metadata.image`,
+									message: `Service ${
+										index + 1
+									} metadata image is required when metadata is present`,
+								});
+							}
+						}
 					});
 				}
 			} else {

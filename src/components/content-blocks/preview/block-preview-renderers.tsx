@@ -13,7 +13,11 @@ import {
 	RecommendationBlockData,
 	TitleBlockData,
 	VideoBlockData,
+	ColumnBlockData,
+	ContentBlock,
+	AnyBlockData,
 } from "@/types/content";
+import { Service } from "@/types/service/service";
 import Image from "next/image";
 
 import ReactPlayer from "react-player";
@@ -30,6 +34,7 @@ import type { FormItem } from "@/types/content";
 
 import "./styles.css";
 import { useReactFlow, useNodeId } from "@xyflow/react";
+import { BlockPreview } from "./block-preview";
 
 interface BlockPreviewProps<T> {
 	data: T;
@@ -39,7 +44,7 @@ export const TitleBlockRenderer = ({
 	data,
 }: BlockPreviewProps<TitleBlockData>) => {
 	const { level, text } = data;
-	const parsedLevel = typeof level === "string" ? parseInt(level) : 1;
+	const parsedLevel = typeof level === "string" ? parseInt(level) : level;
 
 	switch (parsedLevel) {
 		case 1:
@@ -160,31 +165,110 @@ export const RecommendationBlockRenderer = ({
 	data,
 }: BlockPreviewProps<RecommendationBlockData>) => {
 	const { services, test } = data;
-	const { loading, getServiceBySlug } = useServices();
+	const { loading, getServiceBySlug, getServiceFromCouncil, council } =
+		useServices();
+	const [serviceDataMap, setServiceDataMap] = useState<
+		Map<string, { service?: Service; usedMetadata: boolean }>
+	>(new Map());
+	const [isLoadingServices, setIsLoadingServices] = useState(true);
 
-	if (loading) {
+	// Fetch services with fallback to metadata
+	useEffect(() => {
+		const fetchServices = async () => {
+			setIsLoadingServices(true);
+			const dataMap = new Map<
+				string,
+				{ service?: Service; usedMetadata: boolean }
+			>();
+
+			for (const serviceRef of services) {
+				let serviceData: Service | undefined;
+				let usedMetadata = false;
+
+				// Priority 1: Use test data if available
+				if (test) {
+					serviceData = test;
+				} else {
+					// Get the council (use current council as fallback for backward compatibility)
+					const serviceCouncil = serviceRef.council || council;
+
+					// Priority 2: Try to fetch from the service's original council
+					if (serviceCouncil === council) {
+						// Service is from current council, use cached lookup
+						serviceData = getServiceBySlug(serviceRef.slug, serviceCouncil);
+					} else {
+						// Service is from a different council, fetch it
+						try {
+							serviceData = await getServiceFromCouncil(
+								serviceRef.slug,
+								serviceCouncil
+							);
+						} catch (error) {
+							console.warn(
+								`Failed to fetch service ${serviceRef.slug} from ${serviceCouncil}`,
+								error
+							);
+						}
+					}
+
+					// Priority 3: If service not found and we have metadata, use it
+					if (!serviceData && serviceRef.metadata) {
+						serviceData = {
+							name: serviceRef.slug,
+							title: serviceRef.metadata.title,
+							image: serviceRef.metadata.image,
+							excerpt: serviceRef.metadata.excerpt,
+						} as Service;
+						usedMetadata = true;
+					}
+				}
+
+				dataMap.set(serviceRef.slug, { service: serviceData, usedMetadata });
+			}
+
+			setServiceDataMap(dataMap);
+			setIsLoadingServices(false);
+		};
+
+		fetchServices();
+	}, [services, test, getServiceBySlug, getServiceFromCouncil, council]);
+
+	if (loading || isLoadingServices) {
 		return <LoaderIcon className="animate-spin" />;
 	}
 
 	return (
-		<div className="flex w-full flex-col md:flex-row gap-4 justify-center">
+		<div className="flex w-full flex-col md:flex-row gap-4 justify-center md:items-stretch">
 			{services.map((service, i) => {
-				const serviceData = test ? test : getServiceBySlug(service.slug);
+				const serviceInfo = serviceDataMap.get(service.slug);
+				const serviceData = serviceInfo?.service;
+				const usedMetadata = serviceInfo?.usedMetadata || false;
+
 				if (!serviceData) return null;
 
 				return (
-					<div key={`service-${service.slug}-${i}`} className="relative h-full">
+					<div key={`service-${service.slug}-${i}`} className="flex flex-1">
 						<div
 							className={clsx(
-								"service-card",
+								"service-card flex-1",
 								service.config?.type
 									? `service-card-${service.config.type}`
 									: "service-card-medium",
-								service.config?.theme
-									? `service-card-${service.config.theme}`
-									: "service-card-white"
+								service.council
+									? `service-card-${service.council}`
+									: "service-card-white",
+								usedMetadata && "ring-2 ring-yellow-400"
 							)}
 						>
+							{usedMetadata && (
+								<div className="bg-yellow-100 border-b border-yellow-300 px-3 py-1 text-xs text-yellow-800 flex items-center gap-1">
+									<span className="font-semibold">⚠</span>
+									<span>
+										Using cached data (service unavailable from{" "}
+										{service.council})
+									</span>
+								</div>
+							)}
 							<div className="service-card-image-container">
 								<Image
 									className="service-card-image"
@@ -208,6 +292,9 @@ export const RecommendationBlockRenderer = ({
 									<p className="description">
 										{serviceData.summary?.description}
 									</p>
+								)}
+								{!serviceData.summary?.description && serviceData.excerpt && (
+									<p className="description">{serviceData.excerpt}</p>
 								)}
 							</div>
 						</div>
@@ -434,6 +521,39 @@ export const AssessmentResultRenderer = ({
 			{paragraph?.text && (
 				<p className="text-gray-700 whitespace-pre-line">{paragraph.text}</p>
 			)}
+		</div>
+	);
+};
+
+export const ColumnBlockRenderer = ({
+	data,
+}: BlockPreviewProps<ColumnBlockData>) => {
+	const { leftColumn = [], rightColumn = [] } = data;
+
+	const renderColumn = (blocks: ContentBlock<AnyBlockData>[]) => {
+		if (blocks.length === 0) {
+			return (
+				<div className="text-sm text-gray-400 italic">
+					No content in this column
+				</div>
+			);
+		}
+
+		return (
+			<div className="space-y-4">
+				{blocks.map((block) => (
+					<div key={block.id}>
+						<BlockPreview block={block} />
+					</div>
+				))}
+			</div>
+		);
+	};
+
+	return (
+		<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<div className="column-left">{renderColumn(leftColumn)}</div>
+			<div className="column-right">{renderColumn(rightColumn)}</div>
 		</div>
 	);
 };

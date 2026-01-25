@@ -44,6 +44,8 @@ export function FlowProvider({
 		getFlowSnapshot,
 		isLocalChangeRef,
 		applyFlow,
+		duplicateNode,
+		deleteNode,
 	} = useFlowState({ flow: flowToUse, isPreviewingVersion });
 
 	const { onSave, onRestore, onReset } = useFlowPersistence({
@@ -73,6 +75,8 @@ export function FlowProvider({
 		getFlowSnapshot,
 		applyFlow,
 		isLocalChangeRef,
+		duplicateNode,
+		deleteNode,
 		onSave,
 		onRestore,
 		onReset,

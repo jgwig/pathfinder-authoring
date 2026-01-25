@@ -11,6 +11,7 @@ import {
 	RecommendationBlockData,
 	TitleBlockData,
 	VideoBlockData,
+	ColumnBlockData,
 } from "@/types/content";
 import { ContentBlock } from "@/types/content";
 import {
@@ -26,6 +27,7 @@ import {
 	RecommendationBlockRenderer,
 	TitleBlockRenderer,
 	VideoBlockRenderer,
+	ColumnBlockRenderer,
 } from "./block-editor-renderers";
 
 interface BlockEditorProps {
@@ -125,6 +127,13 @@ export function BlockEditor({ block, handleUpdateBlock }: BlockEditorProps) {
 				return (
 					<AssessmentResultRenderer
 						data={data as AssessmentResultData}
+						onChange={handleChange}
+					/>
+				);
+			case "column":
+				return (
+					<ColumnBlockRenderer
+						data={data as ColumnBlockData}
 						onChange={handleChange}
 					/>
 				);

@@ -35,6 +35,8 @@ export type FlowContextValue = {
 	getFlowSnapshot: () => PathwayFlowData;
 	applyFlow: (flow: PathwayFlowData) => void;
 	isLocalChangeRef: MutableRefObject<boolean>;
+	duplicateNode: (nodeId: string) => void;
+	deleteNode: (nodeId: string) => void;
 	onSave: () => Promise<void>;
 	onRestore: () => void;
 	onReset: () => void;

@@ -1,4 +1,6 @@
-// Client-safe fetcher for external services. Flow server actions now live in flow-actions.ts.
+"use server";
+
+// Server action for fetching external services. Flow server actions now live in flow-actions.ts.
 export async function getServices(council: string) {
 	const baseURL = "https://earlyaccess-api.daysix.co/";
 	const servicesURL = baseURL + council + "/community-services";
@@ -10,5 +12,6 @@ export async function getServices(council: string) {
 		return data;
 	} catch (error) {
 		console.error(error);
+		throw error; // Re-throw to allow proper error handling
 	}
 }
