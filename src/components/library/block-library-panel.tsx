@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, Blocks } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/providers/auth/use-auth";
 import {
 	getBlockLibrary,
@@ -25,7 +26,11 @@ import type {
 	LibraryFilters as FiltersType,
 } from "@/types/library";
 
-export function BlockLibraryPanel() {
+interface BlockLibraryPanelProps {
+	selectedNodeId?: string | null;
+}
+
+export function BlockLibraryPanel({ selectedNodeId }: BlockLibraryPanelProps) {
 	const { user } = useAuth();
 	const [items, setItems] = useState<BlockLibraryItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -48,9 +53,33 @@ export function BlockLibraryPanel() {
 		}
 	}, [user, filters]);
 
+	// Fetch items when filters change
 	useEffect(() => {
 		fetchItems();
 	}, []);
+
+	// Listen for refresh events (when new blocks are saved)
+	useEffect(() => {
+		const handleRefresh = () => {
+			fetchItems();
+		};
+
+		window.addEventListener("library-block-refresh", handleRefresh);
+		return () => {
+			window.removeEventListener("library-block-refresh", handleRefresh);
+		};
+	}, [fetchItems]);
+
+	// Extract unique tags from items
+	const availableTags = useMemo(() => {
+		const tagSet = new Set<string>();
+		items.forEach((item) => {
+			item.tags?.forEach((tagItem) => {
+				tagSet.add(tagItem.tag);
+			});
+		});
+		return Array.from(tagSet).sort();
+	}, [items]);
 
 	const handleDelete = async () => {
 		if (!user || !itemToDelete) return;
@@ -60,9 +89,11 @@ export function BlockLibraryPanel() {
 			const result = await deleteBlockFromLibrary(user, itemToDelete);
 			if (result.success) {
 				setItems((prev) => prev.filter((item) => item.id !== itemToDelete));
+				toast.success("Block deleted from library");
 			}
 		} catch (error) {
 			console.error("Error deleting block:", error);
+			toast.error("Failed to delete block");
 		} finally {
 			setIsDeleting(false);
 			setItemToDelete(null);
@@ -77,6 +108,8 @@ export function BlockLibraryPanel() {
 		window.dispatchEvent(event);
 	};
 
+	const isAddDisabled = !selectedNodeId;
+
 	return (
 		<div className="p-4 space-y-4 h-full flex flex-col">
 			<div className="flex items-center justify-between">
@@ -86,7 +119,7 @@ export function BlockLibraryPanel() {
 			<LibraryFilters
 				filters={filters}
 				onFiltersChange={setFilters}
-				showBlockTypeFilter={true}
+				availableTags={availableTags}
 			/>
 
 			{isLoading ? (
@@ -97,7 +130,7 @@ export function BlockLibraryPanel() {
 				<div className="flex flex-col items-center justify-center py-8 text-center">
 					<Blocks className="h-12 w-12 text-muted-foreground mb-4" />
 					<p className="text-sm text-muted-foreground">
-						{filters.search || filters.blockType || filters.tags?.length
+						{filters.search || filters.tags?.length
 							? "No blocks match your filters"
 							: "No blocks saved yet"}
 					</p>
@@ -120,6 +153,8 @@ export function BlockLibraryPanel() {
 								onAdd={() => handleAddToCanvas(item)}
 								onPreview={() => setPreviewItem(item)}
 								onDelete={() => setItemToDelete(item.id)}
+								disabled={isAddDisabled}
+								disabledReason="Select a page first"
 							/>
 						))}
 					</div>

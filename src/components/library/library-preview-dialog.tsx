@@ -38,15 +38,13 @@ export function LibraryPreviewDialog({
 }: LibraryPreviewDialogProps) {
 	return (
 		<Dialog open={open} onOpenChange={onOpenChange}>
-			<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-				<DialogHeader>
+			<DialogContent className="max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+				<DialogHeader className="flex-shrink-0">
 					<DialogTitle>{title}</DialogTitle>
-					{description && (
-						<DialogDescription>{description}</DialogDescription>
-					)}
+					{description && <DialogDescription>{description}</DialogDescription>}
 				</DialogHeader>
 
-				<ScrollArea className="flex-1 min-h-0 border rounded-md">
+				<ScrollArea className="flex-1 min-h-0 h-[calc(90vh-12rem)] border rounded-md">
 					<div className="p-4 space-y-4">
 						{type === "block" && blockData && (
 							<div className="border rounded-lg p-4 bg-background">
@@ -79,7 +77,7 @@ export function LibraryPreviewDialog({
 					</div>
 				</ScrollArea>
 
-				<DialogFooter>
+				<DialogFooter className="flex-shrink-0">
 					<Button variant="outline" onClick={() => onOpenChange(false)}>
 						Close
 					</Button>

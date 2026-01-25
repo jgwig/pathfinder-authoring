@@ -2,30 +2,30 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Input } from "@/components/ui/input";
-import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
-} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Search } from "lucide-react";
-import { ContentBlockType, contentBlockOptions } from "@/types/content";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+	Popover,
+	PopoverContent,
+	PopoverTrigger,
+} from "@/components/ui/popover";
+import { X, Search, Tags, ChevronDown } from "lucide-react";
 import type { LibraryFilters as LibraryFiltersType } from "@/types/library";
 
 interface LibraryFiltersProps {
 	filters: LibraryFiltersType;
 	onFiltersChange: (filters: LibraryFiltersType) => void;
-	showBlockTypeFilter?: boolean;
+	availableTags?: string[];
 }
 
 export function LibraryFilters({
 	filters,
 	onFiltersChange,
-	showBlockTypeFilter = true,
+	availableTags = [],
 }: LibraryFiltersProps) {
 	const [searchValue, setSearchValue] = useState(filters.search || "");
+	const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
 	// Debounce search input
 	useEffect(() => {
@@ -38,14 +38,18 @@ export function LibraryFilters({
 		return () => clearTimeout(timer);
 	}, [searchValue, filters, onFiltersChange]);
 
-	const handleBlockTypeChange = useCallback(
-		(value: string) => {
+	const handleTagToggle = useCallback(
+		(tag: string, checked: boolean) => {
+			const currentTags = filters.tags || [];
+			const newTags = checked
+				? [...currentTags, tag]
+				: currentTags.filter((t) => t !== tag);
 			onFiltersChange({
 				...filters,
-				blockType: value === "all" ? undefined : (value as ContentBlockType),
+				tags: newTags.length > 0 ? newTags : undefined,
 			});
 		},
-		[filters, onFiltersChange]
+		[filters, onFiltersChange],
 	);
 
 	const handleRemoveTag = useCallback(
@@ -55,8 +59,10 @@ export function LibraryFilters({
 				tags: filters.tags?.filter((tag) => tag !== tagToRemove),
 			});
 		},
-		[filters, onFiltersChange]
+		[filters, onFiltersChange],
 	);
+
+	const selectedTagsCount = filters.tags?.length || 0;
 
 	return (
 		<div className="space-y-3">
@@ -72,24 +78,43 @@ export function LibraryFilters({
 				/>
 			</div>
 
-			{/* Block type filter */}
-			{showBlockTypeFilter && (
-				<Select
-					value={filters.blockType || "all"}
-					onValueChange={handleBlockTypeChange}
-				>
-					<SelectTrigger className="w-full">
-						<SelectValue placeholder="All types" />
-					</SelectTrigger>
-					<SelectContent>
-						<SelectItem value="all">All types</SelectItem>
-						{Object.entries(contentBlockOptions).map(([value, label]) => (
-							<SelectItem key={value} value={value}>
-								{label}
-							</SelectItem>
-						))}
-					</SelectContent>
-				</Select>
+			{/* Tags filter */}
+			{availableTags.length > 0 && (
+				<Popover open={tagPopoverOpen} onOpenChange={setTagPopoverOpen}>
+					<PopoverTrigger asChild>
+						<Button
+							variant="outline"
+							className="w-full justify-between"
+							size="sm"
+						>
+							<span className="flex items-center gap-2">
+								<Tags className="h-4 w-4" />
+								{selectedTagsCount > 0
+									? `${selectedTagsCount} tag${selectedTagsCount > 1 ? "s" : ""} selected`
+									: "Filter by tags"}
+							</span>
+							<ChevronDown className="h-4 w-4 opacity-50" />
+						</Button>
+					</PopoverTrigger>
+					<PopoverContent className="w-[200px] p-2" align="start">
+						<div className="space-y-2 max-h-[200px] overflow-y-auto">
+							{availableTags.map((tag) => (
+								<label
+									key={tag}
+									className="flex items-center gap-2 cursor-pointer hover:bg-accent rounded px-2 py-1"
+								>
+									<Checkbox
+										checked={filters.tags?.includes(tag) || false}
+										onCheckedChange={(checked) =>
+											handleTagToggle(tag, checked === true)
+										}
+									/>
+									<span className="text-sm">{tag}</span>
+								</label>
+							))}
+						</div>
+					</PopoverContent>
+				</Popover>
 			)}
 
 			{/* Active tags */}

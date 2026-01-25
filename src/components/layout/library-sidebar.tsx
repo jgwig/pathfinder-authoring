@@ -11,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { useAuth } from "@/providers/auth/use-auth";
+import { useFlowContext } from "@/providers/flow/flow-context";
 import { FolderKanban, Blocks, FileText } from "lucide-react";
 import { PathwaysPanel } from "@/components/library/pathways-panel";
 import { BlockLibraryPanel } from "@/components/library/block-library-panel";
@@ -21,6 +22,15 @@ type TabValue = "pathways" | "blocks" | "pages";
 export function LibrarySidebar() {
 	const [activeTab, setActiveTab] = useState<TabValue>("pathways");
 	const { logout } = useAuth();
+
+	// Try to get flow context - it may not be available on all pages
+	let selectedNodeId: string | null = null;
+	try {
+		const flowContext = useFlowContext();
+		selectedNodeId = flowContext.selectedNode?.id ?? null;
+	} catch {
+		// Flow context not available (e.g., on pathways list page)
+	}
 
 	return (
 		<Sidebar>
@@ -49,7 +59,9 @@ export function LibrarySidebar() {
 			</SidebarHeader>
 			<SidebarContent>
 				{activeTab === "pathways" && <PathwaysPanel />}
-				{activeTab === "blocks" && <BlockLibraryPanel />}
+				{activeTab === "blocks" && (
+					<BlockLibraryPanel selectedNodeId={selectedNodeId} />
+				)}
 				{activeTab === "pages" && <PageLibraryPanel />}
 			</SidebarContent>
 			<SidebarFooter>

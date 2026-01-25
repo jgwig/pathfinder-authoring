@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +12,7 @@ import {
 	DialogTitle,
 } from "@/components/ui/dialog";
 import { Loader2, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/providers/auth/use-auth";
 import {
 	getPageLibrary,
@@ -48,9 +49,33 @@ export function PageLibraryPanel() {
 		}
 	}, [user, filters]);
 
+	// Fetch items when filters change
 	useEffect(() => {
 		fetchItems();
 	}, []);
+
+	// Listen for refresh events (when new pages are saved)
+	useEffect(() => {
+		const handleRefresh = () => {
+			fetchItems();
+		};
+
+		window.addEventListener("library-page-refresh", handleRefresh);
+		return () => {
+			window.removeEventListener("library-page-refresh", handleRefresh);
+		};
+	}, [fetchItems]);
+
+	// Extract unique tags from items
+	const availableTags = useMemo(() => {
+		const tagSet = new Set<string>();
+		items.forEach((item) => {
+			item.tags?.forEach((tagItem) => {
+				tagSet.add(tagItem.tag);
+			});
+		});
+		return Array.from(tagSet).sort();
+	}, [items]);
 
 	const handleDelete = async () => {
 		if (!user || !itemToDelete) return;
@@ -60,9 +85,11 @@ export function PageLibraryPanel() {
 			const result = await deletePageFromLibrary(user, itemToDelete);
 			if (result.success) {
 				setItems((prev) => prev.filter((item) => item.id !== itemToDelete));
+				toast.success("Page deleted from library");
 			}
 		} catch (error) {
 			console.error("Error deleting page:", error);
+			toast.error("Failed to delete page");
 		} finally {
 			setIsDeleting(false);
 			setItemToDelete(null);
@@ -86,7 +113,7 @@ export function PageLibraryPanel() {
 			<LibraryFilters
 				filters={filters}
 				onFiltersChange={setFilters}
-				showBlockTypeFilter={true}
+				availableTags={availableTags}
 			/>
 
 			{isLoading ? (
@@ -97,7 +124,7 @@ export function PageLibraryPanel() {
 				<div className="flex flex-col items-center justify-center py-8 text-center">
 					<FileText className="h-12 w-12 text-muted-foreground mb-4" />
 					<p className="text-sm text-muted-foreground">
-						{filters.search || filters.blockType || filters.tags?.length
+						{filters.search || filters.tags?.length
 							? "No pages match your filters"
 							: "No pages saved yet"}
 					</p>
@@ -114,7 +141,6 @@ export function PageLibraryPanel() {
 								id={item.id}
 								name={item.name}
 								description={item.description}
-								blockTypes={item.blockTypes}
 								blockCount={item.blockCount}
 								tags={item.tags}
 								createdAt={item.createdAt}

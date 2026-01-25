@@ -1,6 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+	Card,
+	CardContent,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -10,41 +16,12 @@ import {
 	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-	Plus,
-	Eye,
-	Trash2,
-	MoreVertical,
-	Type,
-	Image as ImageIcon,
-	Video,
-	FileText,
-	Columns,
-	ChevronDown,
-	FormInput,
-	ExternalLink,
-	Code,
-	FileCode,
-	LayoutList,
-	ClipboardList,
-} from "lucide-react";
+	Tooltip,
+	TooltipContent,
+	TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { Plus, Eye, Trash2, MoreVertical } from "lucide-react";
 import type { ContentBlockType } from "@/types/content";
-
-// Icons for each block type
-const blockTypeIcons: Record<ContentBlockType, React.ReactNode> = {
-	intro: <LayoutList className="h-4 w-4" />,
-	title: <Type className="h-4 w-4" />,
-	paragraph: <FileText className="h-4 w-4" />,
-	video: <Video className="h-4 w-4" />,
-	image: <ImageIcon className="h-4 w-4" />,
-	assessment: <FormInput className="h-4 w-4" />,
-	recommendation: <ClipboardList className="h-4 w-4" />,
-	assessmentResult: <ClipboardList className="h-4 w-4" />,
-	externalRecommendation: <ExternalLink className="h-4 w-4" />,
-	component: <Code className="h-4 w-4" />,
-	dropdown: <ChevronDown className="h-4 w-4" />,
-	html: <FileCode className="h-4 w-4" />,
-	column: <Columns className="h-4 w-4" />,
-};
 
 // Human readable names for block types
 const blockTypeLabels: Record<ContentBlockType, string> = {
@@ -75,19 +52,22 @@ interface LibraryItemCardProps {
 	onAdd: () => void;
 	onPreview: () => void;
 	onDelete: () => void;
+	disabled?: boolean;
+	disabledReason?: string;
 }
 
 export function LibraryItemCard({
 	name,
 	description,
 	blockType,
-	blockTypes,
 	blockCount,
 	tags,
 	createdAt,
 	onAdd,
 	onPreview,
 	onDelete,
+	disabled = false,
+	disabledReason,
 }: LibraryItemCardProps) {
 	const formatDate = (dateString: string) => {
 		return new Date(dateString).toLocaleDateString("en-US", {
@@ -97,57 +77,20 @@ export function LibraryItemCard({
 	};
 
 	return (
-		<Card className="group hover:bg-accent/50 transition-colors">
-			<CardHeader className="p-3 pb-2">
-				<div className="flex items-start justify-between gap-2">
-					<div className="flex items-center gap-2 min-w-0">
-						{blockType && (
-							<div className="flex-shrink-0 text-muted-foreground">
-								{blockTypeIcons[blockType]}
-							</div>
-						)}
-						<CardTitle className="text-sm font-medium truncate">
+		<Card className="group hover:bg-accent/50 transition-colors gap-2 py-3">
+			<CardHeader className="px-3 py-0">
+				<Tooltip>
+					<TooltipTrigger asChild>
+						<CardTitle className="text-sm font-medium truncate cursor-default">
 							{name}
 						</CardTitle>
-					</div>
-					<div className="flex items-center gap-1 flex-shrink-0">
-						<Button
-							variant="ghost"
-							size="icon"
-							className="h-7 w-7"
-							onClick={onAdd}
-							title="Add to canvas"
-						>
-							<Plus className="h-4 w-4" />
-						</Button>
-						<DropdownMenu>
-							<DropdownMenuTrigger asChild>
-								<Button variant="ghost" size="icon" className="h-7 w-7">
-									<MoreVertical className="h-4 w-4" />
-								</Button>
-							</DropdownMenuTrigger>
-							<DropdownMenuContent align="end">
-								<DropdownMenuItem onClick={onPreview}>
-									<Eye className="h-4 w-4 mr-2" />
-									Preview
-								</DropdownMenuItem>
-								<DropdownMenuItem onClick={onAdd}>
-									<Plus className="h-4 w-4 mr-2" />
-									Add to canvas
-								</DropdownMenuItem>
-								<DropdownMenuItem
-									onClick={onDelete}
-									className="text-destructive focus:text-destructive"
-								>
-									<Trash2 className="h-4 w-4 mr-2" />
-									Delete
-								</DropdownMenuItem>
-							</DropdownMenuContent>
-						</DropdownMenu>
-					</div>
-				</div>
+					</TooltipTrigger>
+					<TooltipContent side="top" className="max-w-[250px]">
+						<p>{name}</p>
+					</TooltipContent>
+				</Tooltip>
 			</CardHeader>
-			<CardContent className="p-3 pt-0 space-y-2">
+			<CardContent className="px-3 py-0 space-y-2">
 				{description && (
 					<p className="text-xs text-muted-foreground line-clamp-2">
 						{description}
@@ -167,22 +110,6 @@ export function LibraryItemCard({
 						<Badge variant="secondary" className="text-xs">
 							{blockCount} block{blockCount !== 1 ? "s" : ""}
 						</Badge>
-					)}
-
-					{/* Block types for pages (show first 2) */}
-					{blockTypes && blockTypes.length > 0 && (
-						<div className="flex items-center gap-1">
-							{blockTypes.slice(0, 2).map((type) => (
-								<span key={type} className="text-muted-foreground">
-									{blockTypeIcons[type]}
-								</span>
-							))}
-							{blockTypes.length > 2 && (
-								<span className="text-xs text-muted-foreground">
-									+{blockTypes.length - 2}
-								</span>
-							)}
-						</div>
 					)}
 				</div>
 
@@ -209,6 +136,62 @@ export function LibraryItemCard({
 				{/* Date */}
 				<p className="text-xs text-muted-foreground">{formatDate(createdAt)}</p>
 			</CardContent>
+			<CardFooter className="px-3 py-0 gap-1">
+				{disabled && disabledReason ? (
+					<Tooltip>
+						<TooltipTrigger asChild>
+							<span className="flex-1">
+								<Button
+									variant="secondary"
+									size="sm"
+									className="w-full"
+									disabled
+								>
+									<Plus className="h-4 w-4 mr-1" />
+									Add to Canvas
+								</Button>
+							</span>
+						</TooltipTrigger>
+						<TooltipContent side="top">
+							<p>{disabledReason}</p>
+						</TooltipContent>
+					</Tooltip>
+				) : (
+					<Button
+						variant="secondary"
+						size="sm"
+						className="flex-1"
+						onClick={onAdd}
+					>
+						<Plus className="h-4 w-4 mr-1" />
+						Add to Canvas
+					</Button>
+				)}
+				<DropdownMenu>
+					<DropdownMenuTrigger asChild>
+						<Button variant="ghost" size="icon" className="h-8 w-8">
+							<MoreVertical className="h-4 w-4" />
+						</Button>
+					</DropdownMenuTrigger>
+					<DropdownMenuContent align="end">
+						<DropdownMenuItem onClick={onPreview}>
+							<Eye className="h-4 w-4 mr-2" />
+							Preview
+						</DropdownMenuItem>
+						<DropdownMenuItem onClick={onAdd} disabled={disabled}>
+							<Plus className="h-4 w-4 mr-2" />
+							Add to canvas
+						</DropdownMenuItem>
+						<DropdownMenuItem
+							onClick={onDelete}
+							className="text-destructive focus:text-destructive"
+						>
+							<Trash2 className="h-4 w-4 mr-2" />
+							Delete
+						</DropdownMenuItem>
+					</DropdownMenuContent>
+				</DropdownMenu>
+			</CardFooter>
 		</Card>
 	);
 }

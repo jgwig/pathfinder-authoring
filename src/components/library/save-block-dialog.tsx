@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useAuth } from "@/providers/auth/use-auth";
 import { saveBlockToLibrary } from "@/actions/block-library-actions";
 import type { ContentBlock, AnyBlockData } from "@/types/content";
@@ -55,7 +56,7 @@ export function SaveBlockDialog({
 				name.trim(),
 				block,
 				description.trim() || undefined,
-				tags.length > 0 ? tags : undefined
+				tags.length > 0 ? tags : undefined,
 			);
 
 			if (result.success) {
@@ -64,9 +65,13 @@ export function SaveBlockDialog({
 				setDescription("");
 				setTagsInput("");
 				onOpenChange(false);
+				toast.success("Block saved to library");
+				// Emit refresh event for library panels
+				window.dispatchEvent(new CustomEvent("library-block-refresh"));
 				onSaved?.();
 			} else {
 				setError(result.error || "Failed to save block");
+				toast.error(result.error || "Failed to save block");
 			}
 		} catch (err) {
 			setError(err instanceof Error ? err.message : "Failed to save block");
@@ -132,19 +137,14 @@ export function SaveBlockDialog({
 						</p>
 					</div>
 
-					{error && (
-						<p className="text-sm text-destructive">{error}</p>
-					)}
+					{error && <p className="text-sm text-destructive">{error}</p>}
 				</div>
 
 				<DialogFooter>
 					<Button variant="outline" onClick={handleClose} disabled={isSaving}>
 						Cancel
 					</Button>
-					<Button
-						onClick={handleSave}
-						disabled={isSaving || !name.trim()}
-					>
+					<Button onClick={handleSave} disabled={isSaving || !name.trim()}>
 						{isSaving ? (
 							<>
 								<Loader2 className="h-4 w-4 mr-2 animate-spin" />
